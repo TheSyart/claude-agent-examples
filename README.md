@@ -155,4 +155,5 @@ skills/                     可插拔技能包
 - [第一期：什么是 agent](ppt/第一期:什么是agent.html)
 - [第二期：手搓 agent](ppt/第二期:手搓agent.html)
 - [第三期：记忆系统](ppt/第三期:记忆系统.html)
-- [第四期：任务规划与分发子代理实现](ppt/第四期:任务规划与分发子代理实现.html)
+- [第四期：Agent 任务规划](ppt/第四期:agent任务规划.html)
+- [第五期：Agent 子代理的实现](ppt/第五期:agent子代理的实现.html)

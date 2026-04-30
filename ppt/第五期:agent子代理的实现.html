@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>第四期:任务规划与分发子代理实现</title>
+<title>第五期:Agent 子代理的实现</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
@@ -173,153 +173,28 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
   <div class="cover-wrap">
     <div class="cover-left">
-      <div class="chip"><div class="chip-dot"></div>BUILD AGENT · EP 04 · PLAN · SUBAGENT · ENGINEERING</div>
-      <div class="cover-title">Agent任务规划</div>
-      <div class="cover-green">与分发子代理</div>
-      <div class="desc" style="max-width:39vw;margin-bottom:1.2vw">从“会用工具”的 Agent，升级到“先拆计划、再委派细节、最后只保留结果”的工程化执行框架 —— 教学示例验证 + 主项目落地。</div>
+      <div class="chip"><div class="chip-dot"></div>BUILD AGENT · EP 05 · SUBAGENT · CONTEXT ISOLATION</div>
+      <div class="cover-title">Agent</div>
+      <div class="cover-green">子代理实现</div>
+      <div class="desc" style="max-width:39vw;margin-bottom:1.2vw">计划解决"做什么", 子代理解决"在哪做" —— 把抓页面、跑命令的脏活关进独立 message loop, 主 history 只收最终摘要, 教学示例验证 + 主项目落地。</div>
       <div style="display:flex;gap:0.5vw;flex-wrap:wrap">
-        <span class="badge-g">update_todos</span>
-        <span class="badge-i">dispatch_subagent</span>
-        <span class="badge-o">Context Isolation</span>
+        <span class="badge-g">dispatch_subagent</span>
+        <span class="badge-i">Context Isolation</span>
+        <span class="badge-o">Whitelist</span>
         <span class="badge-dim">agent/ package</span>
       </div>
     </div>
     <div class="cover-right">
       <div style="font-family:'JetBrains Mono',monospace;font-size:0.65vw;letter-spacing:0;color:#1E3A2A;margin-bottom:1.2vw">// OVERVIEW</div>
-      <div class="info-row hi"><div class="info-icon">01</div><div><div class="info-name">Plan</div><div class="info-sub">显式 todolist + 状态推进</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">02</div><div><div class="info-name">Dispatch</div><div class="info-sub">独立 message loop 办细活</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">03</div><div><div class="info-name">Compress</div><div class="info-sub">主 history 只收最终摘要</div></div></div>
-      <div class="info-row"><div class="info-icon">04</div><div><div class="info-name">Engineer</div><div class="info-sub">沉淀到 agent/ 包，复用主抽象</div></div></div>
+      <div class="info-row hi"><div class="info-icon">01</div><div><div class="info-name">Why</div><div class="info-sub">把脏活关进短生命周期上下文</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">02</div><div><div class="info-name">Loop</div><div class="info-sub">嵌套 message loop, 独立 system + 工具</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">03</div><div><div class="info-name">Dispatch</div><div class="info-sub">主 Agent 只看到 task 与摘要</div></div></div>
+      <div class="info-row"><div class="info-icon">04</div><div><div class="info-name">Engineer</div><div class="info-sub">沉淀到 agent/, 预设身份可测可审</div></div></div>
     </div>
   </div>
-  <div class="footer"><div>build-agent-example/code · agent/ · 2026-04-29</div><div><span>15 SLIDES</span></div></div>
+  <div class="footer"><div>build-agent-example/code/step08 · agent/subagents/ · 2026-04-29</div><div><span>11 SLIDES</span></div></div>
 </div>
 
-<div class="slide" id="s1">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
-  <div class="page-id">// problem &nbsp;·&nbsp; <span>第一只拦路虎：失序</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">WHY 02 · PLAN MISSING</div>
-      <div class="h-main">复杂任务的第一道坎<br><em>不是不会调用工具</em></div>
-      <div class="desc">任务一旦超过 3 步，模型容易跳步、折返、失焦 —— 因为它的 todo 只在脑内，外部既看不到、也无法约束。</div>
-      <div class="insight"><div class="insight-icon">KEY</div><div class="insight-text">第一个工程问题：<strong>任务状态必须可观测、可校验</strong>。让 todo 从"模型默念"变成"系统可见的状态"。</div></div>
-    </div>
-    <div class="col gap">
-      <div class="info-row hi"><div class="info-icon">A</div><div><div class="info-name">脑内 TODO</div><div class="info-sub">外部看不到当前是第几步，也无法回查</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">B</div><div><div class="info-name">无外部约束</div><div class="info-sub">没人提醒"上一步还没做完，别开新的"</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">C</div><div><div class="info-name">易跳步折返</div><div class="info-sub">第三步忘了跑，第二步又重复做</div></div></div>
-      <div class="terminal">
-        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">before_step07.log</div></div>
-        <div class="term-body">
-          <div><span class="prompt">&gt;</span> 先查资料，再写报告，再验证代码</div>
-          <div><span class="dim">...</span> 模型脑内 todo, 外部无从检查</div>
-          <div><span class="warn">!</span> 第三步忘了跑，第二步又重复做</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s3">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
-  <div class="page-id">// step07 &nbsp;·&nbsp; <span>update_todos 数据模型</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">PLAN 03 · STATE MODEL</div>
-      <div class="h-main">计划不是提示词<br><em>而是可写入的状态</em></div>
-      <div class="desc">模型每次传入完整 todos 数组，工具清洗、校验、保存，并把最新清单回传给下一轮推理。</div>
-      <table class="g-table">
-        <thead><tr><th>字段</th><th>用途</th></tr></thead>
-        <tbody>
-          <tr><td><span class="file">id</span></td><td>稳定排序与引用</td></tr>
-          <tr><td><span class="file">content</span></td><td>一步一句话，降低歧义</td></tr>
-          <tr><td><span class="file">status</span></td><td>pending / in_progress / completed</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="col">
-      <div class="code-card green">
-        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">step07_plan_todolist.py:109–146 · update_todos</div></div>
-        <div class="c-body">
-          <div><span class="ln">109</span><span class="va">TODOS</span><span class="kw">: </span><span class="va">list[dict] </span><span class="kw">=</span> <span class="va">[]</span></div>
-          <div><span class="ln">110</span><span class="va">VALID_STATUS </span><span class="kw">=</span> <span class="va">{</span><span class="st">"pending"</span><span class="va">, </span><span class="st">"in_progress"</span><span class="va">, </span><span class="st">"completed"</span><span class="va">}</span></div>
-          <div><span class="ln">122</span><span class="kw">def </span><span class="fn">update_todos</span><span class="va">(todos</span><span class="kw">: </span><span class="va">list[dict])</span><span class="kw"> -&gt; </span><span class="va">str:</span></div>
-          <div><span class="ln">123</span><span class="va">&nbsp;&nbsp;</span><span class="kw">global </span><span class="va">TODOS</span></div>
-          <div><span class="ln">124</span><span class="va">&nbsp;&nbsp;cleaned </span><span class="kw">= </span><span class="va">[</span><span class="cm">…</span><span class="va">]&nbsp;&nbsp;</span><span class="cm"># 清洗 id / content / 默认 status</span></div>
-          <div><span class="ln">134</span><span class="va">&nbsp;&nbsp;in_progress </span><span class="kw">= </span><span class="va">[t </span><span class="kw">for </span><span class="va">t </span><span class="kw">in </span><span class="va">cleaned</span></div>
-          <div><span class="ln">&nbsp;&nbsp;</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">t[</span><span class="st">"status"</span><span class="va">] </span><span class="kw">== </span><span class="st">"in_progress"</span><span class="va">]</span></div>
-          <div class="hl"><span class="ln">135</span><span class="va">&nbsp;&nbsp;</span><span class="kw">if </span><span class="fn">len</span><span class="va">(in_progress) </span><span class="kw">&gt; </span><span class="num">1</span><span class="va">:</span></div>
-          <div class="hl"><span class="ln">136</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">return </span><span class="st">"Error: 同一时间只能有一个 in_progress 任务"</span></div>
-          <div><span class="ln">138</span><span class="va">&nbsp;&nbsp;TODOS </span><span class="kw">= </span><span class="va">cleaned</span></div>
-          <div><span class="ln">146</span><span class="va">&nbsp;&nbsp;</span><span class="kw">return </span><span class="va">summary </span><span class="kw">+ </span><span class="fn">render_todos</span><span class="va">(TODOS)</span></div>
-        </div>
-      </div>
-      <div class="insight"><div class="insight-icon">RULE</div><div class="insight-text">核心防线是<strong>同一时间只能有一个 in_progress</strong>，让执行序列可以被外部约束。</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s4">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
-  <div class="page-id">// step07 &nbsp;·&nbsp; <span>提示词约束</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">PROMPT 04 · OPERATING RULES</div>
-      <div class="h-main">计划工具要生效<br><em>必须写进系统规矩</em></div>
-      <div class="desc">工具只提供接口，真正决定“什么时候调用”的是 system prompt。这里把多步骤任务、状态推进、简单问答豁免都写成规矩。</div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">多步骤先拆计划</div><div class="info-sub">任务复杂时先调用 update_todos</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">2</div><div><div class="info-name">开始前标记进行中</div><div class="info-sub">pending → in_progress，只允许一个</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">3</div><div><div class="info-name">完成后立刻收口</div><div class="info-sub">in_progress → completed，再进入下一项</div></div></div>
-    </div>
-    <div class="col">
-      <div class="terminal">
-        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">render_todos()</div></div>
-        <div class="term-body">
-          <div><span class="prompt">[计划已更新]</span></div>
-          <div><span class="out">  [~] 1. 抓三个网页</span></div>
-          <div><span class="out">  [ ] 2. 整理标题清单</span></div>
-          <div><span class="out">  [ ] 3. 用一段话总结</span></div>
-          <div><span class="dim">todos updated: total=3, completed=0, in_progress=1</span></div>
-        </div>
-      </div>
-      <div class="insight"><div class="insight-icon">OBS</div><div class="insight-text">终端渲染不是装饰，它让教学和调试能直接看到模型是否按计划推进。</div></div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s4b">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
-  <div class="page-id">// step07/08 &nbsp;·&nbsp; <span>收尾闭环：完成校验 + 重置</span></div>
-  <div class="two-col wide-r">
-    <div class="col">
-      <div class="tag">CLOSE 05 · COMPLETION GUARD</div>
-      <div class="h-main">模型说"办完了"<br><em>不算真办完</em></div>
-      <div class="desc">仅靠模型自报完成靠不住 —— 它常在还有 pending 任务时就给最终回答。需要在 <span class="file">stop_reason != tool_use</span> 这一刻，由代码再校一遍 todolist，再决定结束还是继续。</div>
-      <div class="info-row hi"><div class="info-icon">①</div><div><div class="info-name">校验未完成项</div><div class="info-sub">filter status != completed</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">②</div><div><div class="info-name">未办妥就回推</div><div class="info-sub">把残单当作 user 消息塞回 history，continue 内层循环</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">③</div><div><div class="info-name">办妥则重置</div><div class="info-sub">TODOS = []，下一轮会话从空白开始，不污染新差事</div></div></div>
-    </div>
-    <div class="col">
-      <div class="code-card green">
-        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">step07_plan_todolist.py:259-280 · close-loop</div></div>
-        <div class="c-body">
-          <div><span class="ln">259</span><span class="kw">if </span><span class="va">message.stop_reason </span><span class="kw">!= </span><span class="st">"tool_use"</span><span class="va">:</span></div>
-          <div><span class="ln">260</span><span class="va">&nbsp;&nbsp;reply </span><span class="kw">= </span><span class="fn">next</span><span class="va">(b.text </span><span class="kw">for </span><span class="va">b </span><span class="kw">in </span><span class="va">message.content </span><span class="cm">…</span><span class="va">)</span></div>
-          <div><span class="ln">262</span><span class="va">&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">TODOS:</span></div>
-          <div class="hl"><span class="ln">263</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;unfinished </span><span class="kw">= </span><span class="va">[t </span><span class="kw">for </span><span class="va">t </span><span class="kw">in </span><span class="va">TODOS </span><span class="kw">if </span><span class="va">t[</span><span class="st">"status"</span><span class="va">] </span><span class="kw">!= </span><span class="st">"completed"</span><span class="va">]</span></div>
-          <div class="hl"><span class="ln">264</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">unfinished:</span></div>
-          <div class="hl"><span class="ln">268</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;history.</span><span class="fn">append</span><span class="va">({</span><span class="st">"role"</span><span class="va">: </span><span class="st">"user"</span><span class="va">, </span><span class="st">"content"</span><span class="va">: </span><span class="cm">…</span><span class="va">})</span></div>
-          <div class="hl"><span class="ln">275</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">continue</span><span class="cm">  # 残单回推, 让模型继续干</span></div>
-          <div><span class="ln">276</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="fn">print</span><span class="va">(</span><span class="st">"[最终计划状态 - 全部办妥]"</span><span class="va">)</span></div>
-          <div class="hl"><span class="ln">279</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;TODOS </span><span class="kw">= </span><span class="va">[]</span><span class="cm">  # 收口重置</span></div>
-          <div><span class="ln">280</span><span class="va">&nbsp;&nbsp;</span><span class="kw">break</span></div>
-        </div>
-      </div>
-      <div class="insight"><div class="insight-icon">FIX</div><div class="insight-text">早期版本只 break，模型一句"已完成"就退出，残单遗留 + 计划串场污染下一轮 —— 这一段是<strong>双重兜底</strong>。</div></div>
-    </div>
-  </div>
-</div>
 
 <div class="slide" id="s2">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-r"></div></div>
@@ -656,7 +531,7 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 <div class="nav">
   <div class="nav-btn" id="prev">&#8592;</div>
   <div class="nav-dots" id="dots"></div>
-  <div class="nav-count" id="count">1 / 15</div>
+  <div class="nav-count" id="count">1 / 11</div>
   <div class="nav-btn" id="next">&#8594;</div>
 </div>
 
