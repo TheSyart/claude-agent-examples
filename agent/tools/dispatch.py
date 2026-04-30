@@ -1,4 +1,5 @@
 from __future__ import annotations
+from threading import Lock
 
 from .base import Tool
 from .registry import ToolRegistry
@@ -10,7 +11,13 @@ class DispatchSubagentTool(Tool):
     总结文本, 主 agent 的 history 中只多一条 tool_result。"""
 
     name = "dispatch_subagent"
-    exclusive = True   # 子代理内部会跑工具, 不应与其他 tool_use 并发
+    exclusive = False
+
+    @property
+    def concurrency_safe(self) -> bool:
+        # 每次派遣都有独立 history / ToolRegistry / AgentRunner。若主模型在同一帧
+        # 发出多个 dispatch_subagent, runner 可以并行等待它们完成, 再按原顺序回填结果。
+        return True
 
     def __init__(self, *, client, model: str,
                  parent_registry: ToolRegistry,
@@ -22,13 +29,16 @@ class DispatchSubagentTool(Tool):
         self._subagent_registry = subagent_registry
         self._runner_factory = runner_factory   # 注入: spec, sub_registry -> AgentRunner
         self._counter = 0
+        self._counter_lock = Lock()
 
     @property
     def description(self) -> str:
         return (
             "派遣一个小太监去单独办差。小太监有自己独立的上下文, 办完只回传"
             "一段文字总结, 不污染主上下文。适用于: 抓取并阅读多个网页、"
-            "批量执行命令并整理输出、需要试错的探索性搜索、跨多文件查找等。\n\n"
+            "批量执行命令并整理输出、需要试错的探索性搜索、跨多文件查找等。"
+            "若多件差事互不依赖, 可在同一回复中发出多个 dispatch_subagent, "
+            "运行时会并发派遣并按原 tool_use 顺序回填结果。\n\n"
             "可用 agent_type:\n"
             f"{self._subagent_registry.describe()}"
         )
@@ -38,7 +48,7 @@ class DispatchSubagentTool(Tool):
         return tool_parameters_schema(
             agent_type=StringSchema(
                 "子代理类型, 必须是 description 中列出的可用类型之一",
-                enum=self._subagent_registry.names(),
+                enum=self._subagent_registry.names(include_aliases=True),
             ),
             task=StringSchema(
                 "交代给小太监的差事, 写清要做什么、希望返回什么格式的总结"
@@ -54,7 +64,7 @@ class DispatchSubagentTool(Tool):
         if spec is None:
             return (
                 f"Error: unknown subagent '{agent_type}'. "
-                f"Available: {self._subagent_registry.names()}"
+                f"Available: {self._subagent_registry.names(include_aliases=True)}"
             )
 
         # 子 registry: 从父 registry 借出白名单 Tool 实例 (Tool 多为无状态, 共享指针即可)
@@ -66,9 +76,12 @@ class DispatchSubagentTool(Tool):
 
         runner = self._runner_factory(spec=spec, sub_registry=sub_registry)
 
-        self._counter += 1
+        with self._counter_lock:
+            self._counter += 1
+            counter = self._counter
+
         label = (purpose or task)[:60]
-        print(f"\n[派遣小太监 #{self._counter} · {agent_type}]: {label}")
+        print(f"\n[派遣小太监 #{counter} · {spec.name}]: {label}")
         print("  ┌── subagent context start ──")
 
         history: list = [{"role": "user", "content": task}]

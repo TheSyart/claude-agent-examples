@@ -1,4 +1,5 @@
 from __future__ import annotations
+from concurrent.futures import ThreadPoolExecutor
 
 from .tools.registry import ToolRegistry
 
@@ -55,18 +56,60 @@ class AgentRunner:
                 self._maybe_compact(history)
                 return reply
 
-            tool_results = []
-            for block in message.content:
-                if block.type != "tool_use":
-                    continue
-                content = self.registry.execute(block.name, block.input)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": content,
-                })
+            tool_blocks = [block for block in message.content if block.type == "tool_use"]
+            tool_results = self._execute_tool_blocks(tool_blocks)
 
             history.append({"role": "user", "content": tool_results})
+
+    def _execute_tool_blocks(self, tool_blocks: list) -> list[dict]:
+        """Execute tool_use blocks, parallelizing contiguous safe groups.
+
+        The Anthropic API expects one tool_result per tool_use. We may execute
+        independent calls concurrently, but the returned list must preserve the
+        original block order.
+        """
+        results_by_id: dict[str, str] = {}
+        i = 0
+        while i < len(tool_blocks):
+            block = tool_blocks[i]
+            tool = self.registry.get(block.name)
+
+            if tool is not None and tool.concurrency_safe:
+                group = []
+                while i < len(tool_blocks):
+                    candidate = tool_blocks[i]
+                    candidate_tool = self.registry.get(candidate.name)
+                    if candidate_tool is None or not candidate_tool.concurrency_safe:
+                        break
+                    group.append(candidate)
+                    i += 1
+
+                if len(group) > 1:
+                    names = ", ".join(b.name for b in group)
+                    print(f"\n[并发执行 {len(group)} 个工具]: {names}\n")
+                    with ThreadPoolExecutor(max_workers=len(group)) as pool:
+                        contents = list(pool.map(
+                            lambda b: self.registry.execute(b.name, b.input),
+                            group,
+                        ))
+                    for b, content in zip(group, contents):
+                        results_by_id[b.id] = content
+                else:
+                    b = group[0]
+                    results_by_id[b.id] = self.registry.execute(b.name, b.input)
+                continue
+
+            results_by_id[block.id] = self.registry.execute(block.name, block.input)
+            i += 1
+
+        return [
+            {
+                "type": "tool_result",
+                "tool_use_id": block.id,
+                "content": results_by_id[block.id],
+            }
+            for block in tool_blocks
+        ]
 
     def _maybe_compact(self, history: list) -> None:
         if not (self.compactor and self.token_tracker):

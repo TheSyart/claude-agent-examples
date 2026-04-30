@@ -7,22 +7,51 @@ from .spec import SubagentSpec
 # 工具白名单写在代码里, 不放模板中 —— 安全设置不应被无意修改。
 # 模板里只写身份/口吻/职责文案。
 _BUILTIN_SPECS: dict[str, dict] = {
-    "researcher": {
+    "xiaohuangmen": {
         "description": (
-            "研究型小太监 (职责只读)。适合派去查资料、读多个文件、grep 大范围、"
-            "抓网页或调搜索 API 后汇总 —— 按职责约束不应修改东西，但允许"
-            "用 run_command 跑只读命令 (curl / find / jq 等)。"
+            "通传小黄门。轻量只读, 适合短命令、快速确认、跑腿探路。"
+            "若发现差事变复杂, 应回禀总管改派专职内官。"
         ),
         "tool_names": (
-            "load_skill", "web_fetch", "run_command",
+            "run_command", "read_file", "glob", "grep",
+        ),
+        "max_turns": 8,
+    },
+    "sili_suitang": {
+        "description": (
+            "司礼监随堂小太监。只读文书, 适合阅读代码、查阅文档、"
+            "整理提纲、归纳结论。"
+        ),
+        "tool_names": (
+            "load_skill", "read_file", "glob", "grep",
+        ),
+        "max_turns": 12,
+    },
+    "dongchang_tanshi": {
+        "description": (
+            "东厂探事小太监。只读查访, 适合抓网页、查资料、"
+            "探索性搜索、比对外部线索。"
+        ),
+        "tool_names": (
+            "run_command", "web_fetch", "load_skill",
             "read_file", "glob", "grep",
         ),
         "max_turns": 15,
     },
-    "general": {
+    "shangbao_dianbu": {
         "description": (
-            "通用小太监。可读可写可执行命令, 适合派去办需要动手"
-            "(写文件 / 跑命令 / 多步操作) 的独立差事。"
+            "尚宝监典簿小太监。只读核验, 适合盘点文件、校对清单、"
+            "检查遗漏、整理表册。"
+        ),
+        "tool_names": (
+            "run_command", "read_file", "glob", "grep",
+        ),
+        "max_turns": 12,
+    },
+    "neiguan_yingzao": {
+        "description": (
+            "内官监营造小太监。可读写可执行命令, 适合修改文件、"
+            "搭建工程、跑命令验收。"
         ),
         "tool_names": (
             "run_command", "web_fetch", "load_skill",
@@ -30,6 +59,12 @@ _BUILTIN_SPECS: dict[str, dict] = {
         ),
         "max_turns": 20,
     },
+}
+
+_ALIASES = {
+    # 兼容旧版工程代码和历史 prompt 中的身份名。
+    "researcher": "dongchang_tanshi",
+    "general": "neiguan_yingzao",
 }
 
 _DEFAULT_PROMPT = (
@@ -79,15 +114,28 @@ class SubagentRegistry:
                 max_turns=cfg["max_turns"],
             )
 
-    def get(self, name: str) -> SubagentSpec | None:
-        return self._specs.get(name)
+    def resolve_name(self, name: str) -> str:
+        return _ALIASES.get(name, name)
 
-    def names(self) -> list[str]:
-        return sorted(self._specs.keys())
+    def get(self, name: str) -> SubagentSpec | None:
+        return self._specs.get(self.resolve_name(name))
+
+    def names(self, *, include_aliases: bool = False) -> list[str]:
+        names = set(self._specs.keys())
+        if include_aliases:
+            names.update(_ALIASES.keys())
+        return sorted(names)
+
+    def aliases(self) -> dict[str, str]:
+        return dict(_ALIASES)
 
     def describe(self) -> str:
         """给主 agent 工具的 description 用 —— 列出所有可用 subagent。"""
-        return "\n".join(
+        lines = [
             f"  - {spec.name}: {spec.description}"
             for spec in self._specs.values()
-        )
+        ]
+        if _ALIASES:
+            alias_text = ", ".join(f"{k} -> {v}" for k, v in sorted(_ALIASES.items()))
+            lines.append(f"  - 兼容别名: {alias_text}")
+        return "\n".join(lines)

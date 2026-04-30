@@ -173,355 +173,252 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
   <div class="cover-wrap">
     <div class="cover-left">
-      <div class="chip"><div class="chip-dot"></div>BUILD AGENT · EP 05 · SUBAGENT · CONTEXT ISOLATION</div>
+      <div class="chip"><div class="chip-dot"></div>BUILD AGENT · EP 05 · ENGINEERING SUBAGENTS</div>
       <div class="cover-title">Agent</div>
-      <div class="cover-green">子代理实现</div>
-      <div class="desc" style="max-width:39vw;margin-bottom:1.2vw">计划解决"做什么", 子代理解决"在哪做" —— 把抓页面、跑命令的脏活关进独立 message loop, 主 history 只收最终摘要, 教学示例验证 + 主项目落地。</div>
+      <div class="cover-green">子代理工程化实现</div>
+      <div class="desc" style="max-width:39vw;margin-bottom:1vw">这一期不只讲 step08 的演示代码，而是看主项目里真正落地的子代理系统：职位预设、工具白名单、独立 runner、并发 dispatch，以及主 history 如何只保留摘要。</div>
+      <div class="code-card green" style="margin-bottom:1vw;max-width:39vw">
+        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">agent/tools/dispatch.py · execute()</div></div>
+        <div class="c-body">
+          <div><span class="ln">01</span><span class="va">spec </span><span class="kw">= </span><span class="va">subagent_registry.</span><span class="fn">get</span><span class="va">(agent_type)</span></div>
+          <div><span class="ln">02</span><span class="va">sub_registry </span><span class="kw">= </span><span class="fn">ToolRegistry</span><span class="va">()</span></div>
+          <div><span class="ln">03</span><span class="kw">for </span><span class="va">tool_name </span><span class="kw">in </span><span class="va">spec.tool_names:</span></div>
+          <div><span class="ln">04</span><span class="va">&nbsp;&nbsp;sub_registry.</span><span class="fn">register</span><span class="va">(parent_registry.</span><span class="fn">get</span><span class="va">(tool_name))</span></div>
+          <div class="hl"><span class="ln">05</span><span class="va">runner </span><span class="kw">= </span><span class="fn">runner_factory</span><span class="va">(spec, sub_registry)</span></div>
+          <div class="hl"><span class="ln">06</span><span class="va">final </span><span class="kw">= </span><span class="va">runner.</span><span class="fn">step</span><span class="va">([{</span><span class="st">"role"</span><span class="va">: </span><span class="st">"user"</span><span class="va">, </span><span class="st">"content"</span><span class="va">: task}])</span></div>
+        </div>
+      </div>
       <div style="display:flex;gap:0.5vw;flex-wrap:wrap">
         <span class="badge-g">dispatch_subagent</span>
-        <span class="badge-i">Context Isolation</span>
-        <span class="badge-o">Whitelist</span>
-        <span class="badge-dim">agent/ package</span>
+        <span class="badge-i">AgentRunner</span>
+        <span class="badge-o">Tool Whitelist</span>
+        <span class="badge-dim">Parallel Dispatch</span>
       </div>
     </div>
     <div class="cover-right">
       <div style="font-family:'JetBrains Mono',monospace;font-size:0.65vw;letter-spacing:0;color:#1E3A2A;margin-bottom:1.2vw">// OVERVIEW</div>
-      <div class="info-row hi"><div class="info-icon">01</div><div><div class="info-name">Why</div><div class="info-sub">把脏活关进短生命周期上下文</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">02</div><div><div class="info-name">Loop</div><div class="info-sub">嵌套 message loop, 独立 system + 工具</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">03</div><div><div class="info-name">Dispatch</div><div class="info-sub">主 Agent 只看到 task 与摘要</div></div></div>
-      <div class="info-row"><div class="info-icon">04</div><div><div class="info-name">Engineer</div><div class="info-sub">沉淀到 agent/, 预设身份可测可审</div></div></div>
+      <div class="info-row hi"><div class="info-icon">01</div><div><div class="info-name">Architecture</div><div class="info-sub">loop → runner → registry → dispatch</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">02</div><div><div class="info-name">Isolation</div><div class="info-sub">独立 history + 独立 AgentRunner</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">03</div><div><div class="info-name">Roles</div><div class="info-sub">五种宫廷职位 + 白名单权限</div></div></div>
+      <div class="info-row hi"><div class="info-icon">04</div><div><div class="info-name">Concurrency</div><div class="info-sub">同帧多个 dispatch 并发执行</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">05</div><div><div class="info-name">Guardrails</div><div class="info-sub">无递归 · 无私改 todo · 结果压缩</div></div></div>
     </div>
   </div>
-  <div class="footer"><div>build-agent-example/code/step08 · agent/subagents/ · 2026-04-29</div><div><span>11 SLIDES</span></div></div>
+  <div class="footer"><div>agent/runner.py · agent/tools/dispatch.py · agent/subagents/registry.py</div><div><span>8 SLIDES</span></div></div>
 </div>
-
 
 <div class="slide" id="s2">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-r"></div></div>
-  <div class="page-id">// transition &nbsp;·&nbsp; <span>step07 → step08</span></div>
+  <div class="page-id">// problem &nbsp;·&nbsp; <span>为什么需要子代理</span></div>
   <div class="two-col wide-r">
     <div class="col">
-      <div class="tag">LIMIT 05 · DIRTY WORK STAYS</div>
+      <div class="tag">WHY 02 · MAIN AGENT BLOATS</div>
       <div class="h-main">计划清楚了<br><em>但脏活还在主对话</em></div>
-      <div class="desc"><span class="file">update_todos</span> 让计划可见、可校验，但<strong style="color:#FB923C">执行步骤</strong>仍由主 Agent 亲自调工具 —— 每次抓页面、跑命令、读 traceback，输出都进 history。</div>
-      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">网页正文塞进 history</div><div class="info-sub">一次抓 3 个网页 ≈ 24KB token 进主对话</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">命令输出难以压缩</div><div class="info-sub">traceback / 大表格 / 二进制噪声全留底</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">压缩窗口提前触发</div><div class="info-sub">主 history 越长，compactor 越早被迫上场</div></div></div>
+      <div class="desc"><span class="file">update_todos</span> 让计划可见、可校验，但执行细节仍可能污染主 history：网页正文、命令大表、报错栈都会被下一轮模型继续携带。</div>
+      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">网页正文塞进 history</div><div class="info-sub">一次 web_fetch 可能返回数千字符</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">探索过程价值低</div><div class="info-sub">中间命令和试错日志通常不该长期保留</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">↗</div><div><div class="info-name">压缩窗口提前触发</div><div class="info-sub">主 history 越脏, compactor 越早被迫上场</div></div></div>
     </div>
     <div class="col">
       <div class="terminal">
-        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">main_history.tokens</div></div>
+        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">context_pollution.log</div></div>
         <div class="term-body">
-          <div><span class="dim">// step07 only ─ 计划在主, 执行也在主</span></div>
-          <div><span class="prompt">turn 1:</span> <span class="out">update_todos      </span> <span class="warn">+   80 tk</span></div>
-          <div><span class="prompt">turn 2:</span> <span class="out">web_fetch ×3      </span> <span class="warn">+ 7800 tk</span></div>
-          <div><span class="prompt">turn 3:</span> <span class="out">run_command (大表)</span> <span class="warn">+ 2100 tk</span></div>
-          <div><span class="prompt">turn 4:</span> <span class="out">update_todos      </span> <span class="warn">+   60 tk</span></div>
+          <div><span class="dim">// 没有子代理时: 所有细节都进主 history</span></div>
+          <div><span class="prompt">main:</span> update_todos <span class="out">计划</span></div>
+          <div><span class="prompt">main:</span> web_fetch <span class="warn">网页正文 8000 字</span></div>
+          <div><span class="prompt">main:</span> run_command <span class="warn">命令输出几百行</span></div>
+          <div><span class="prompt">main:</span> grep <span class="warn">大范围匹配结果</span></div>
           <div><span class="dim">────────────────────────────────────</span></div>
-          <div><span class="warn">主 history 累计</span> <span class="prompt">≈ 10 040 tokens</span></div>
+          <div><span class="warn">问题:</span> 最终回答只需要结论, 不需要所有原始轨迹</div>
         </div>
       </div>
-      <div class="insight"><div class="insight-icon">NEXT</div><div class="insight-text">下一步要把<strong>"执行"从"对话"中剥离</strong> —— 让主 Agent 只负责规划和回答, 脏活交给独立的子上下文。</div></div>
+      <div class="insight"><div class="insight-icon">IDEA</div><div class="insight-text">子代理把“脏活”放到临时上下文，主线只保留<strong>一段回禀</strong>：信息密度高，token 成本低。</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s3">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// definition &nbsp;·&nbsp; <span>子代理的价值与地位</span></div>
+  <div class="two-col">
+    <div class="col">
+      <div class="tag">DEFINE 02 · ROLE &amp; POSITION</div>
+      <div class="h-main">子代理是工具箱里<br><em>"上下文隔离"这个原语</em></div>
+      <div class="desc">在工程代码里，子代理以 <span class="file">dispatch_subagent</span> 工具出现。它不是平级协作者，而是主 Agent 调用的一个特殊 tool：内部临时跑一个完整 AgentRunner。</div>
+      <div class="info-row hi"><div class="info-icon">是</div><div><div class="info-name">主 Agent 的一个工具</div><div class="info-sub">主帧里以 tool_use 调用, 主 history 只多一条 tool_result</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">是</div><div><div class="info-name">一段临时 AgentRunner</div><div class="info-sub">独立 history、独立 system、独立白名单, 跑完即焚</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">非</div><div><div class="info-name">不是平级协作者</div><div class="info-sub">主→子单向调度, 子不能再派子, 也不能改主 todo / 主 history</div></div></div>
+    </div>
+    <div class="col">
+      <table class="g-table">
+        <thead><tr><th>关注点</th><th>主 Agent</th><th>子代理</th></tr></thead>
+        <tbody>
+          <tr><td>身份</td><td>调度者 · 决策者</td><td>执行者 · 搜集者</td></tr>
+          <tr><td>对谁负责</td><td>对用户的下一句回答</td><td>对一段 task 描述</td></tr>
+          <tr><td>生命周期</td><td>跨多轮对话</td><td>一次调用即结束</td></tr>
+          <tr><td>权限边界</td><td>全工具 + dispatch + todo</td><td>子集白名单, 无 dispatch · 无 todo</td></tr>
+          <tr><td>history</td><td>持久 · 三层记忆 · 会被压缩</td><td>临时, 不入主 history</td></tr>
+          <tr><td>失败影响面</td><td>主对话中断</td><td>仅一条 tool_result 回传 Error</td></tr>
+          <tr><td>主线增量</td><td>—</td><td>1 条 tool_result (一段中文汇报)</td></tr>
+        </tbody>
+      </table>
+      <div class="insight"><div class="insight-icon">CMP</div><div class="insight-text">抓网页、读文件、跑命令都可以在子 history 里完成；主 history 只得到<strong>最终摘要</strong>。这就是上下文隔离的收益。</div></div>
     </div>
   </div>
 </div>
 
 <div class="slide" id="s5">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// step08 &nbsp;·&nbsp; <span>为什么需要子代理</span></div>
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
+  <div class="page-id">// identity &nbsp;·&nbsp; <span>预设多种身份</span></div>
   <div class="two-col">
     <div class="col">
-      <div class="tag">SUBAGENT 06 · CONTEXT ISOLATION</div>
-      <div class="h-main">子代理的价值<br><em>不是更聪明</em></div>
-      <div class="desc">它的价值是把“脏活细节”关进一个短生命周期上下文。主 Agent 只接收办完后的压缩汇报。</div>
-      <div class="lane">
-        <div class="lane-box g"><div class="lane-title">主 Agent</div><div class="lane-sub">负责计划、决策、最终回答</div></div>
-        <div class="lane-mid">dispatch</div>
-        <div class="lane-box i"><div class="lane-title">子代理</div><div class="lane-sub">负责搜索、批量命令、试错执行</div></div>
-      </div>
+      <div class="tag">IDENTITY 04 · PRESET ROLES</div>
+      <div class="h-main">一个 dispatcher<br><em>五种宫廷职位</em></div>
+      <div class="desc">工程化版本把“身份文案”和“权限白名单”分离。模板只写职责口吻，真正能用什么工具由 <span class="file">registry.py</span> 决定。</div>
+      <div class="info-row hi"><div class="info-icon">文</div><div><div class="info-name">模板层</div><div class="info-sub">templates/subagents/{name}.md 写身份、约束、回禀格式</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">权</div><div><div class="info-name">代码层</div><div class="info-sub">SubagentSpec.tool_names 写工具白名单, 不受 prompt 漂移影响</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">兼</div><div><div class="info-name">旧别名兼容</div><div class="info-sub">researcher → dongchang_tanshi, general → neiguan_yingzao</div></div></div>
     </div>
-    <div class="col gap">
-      <div class="info-row hi"><div class="info-icon">↓</div><div><div class="info-name">token 污染下降</div><div class="info-sub">网页正文和命令日志不进入主 history</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">↻</div><div><div class="info-name">探索任务可控</div><div class="info-sub">子代理内部跑多轮，主线不被打断</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">×</div><div><div class="info-name">防止无限递归</div><div class="info-sub">子代理工具集不含 dispatch_subagent</div></div></div>
+    <div class="col">
+      <table class="g-table">
+        <thead><tr><th>agent_type</th><th>职位</th><th>权限</th></tr></thead>
+        <tbody>
+          <tr><td><span class="file">xiaohuangmen</span></td><td>通传小黄门</td><td>轻量只读: run/read/glob/grep</td></tr>
+          <tr><td><span class="file">sili_suitang</span></td><td>司礼监随堂</td><td>只读文书: skill/read/search</td></tr>
+          <tr><td><span class="file">dongchang_tanshi</span></td><td>东厂探事</td><td>只读查访: web/read/search</td></tr>
+          <tr><td><span class="file">shangbao_dianbu</span></td><td>尚宝监典簿</td><td>只读核验: run/read/search</td></tr>
+          <tr><td><span class="file">neiguan_yingzao</span></td><td>内官监营造</td><td>可读写执行: write/edit/run</td></tr>
+        </tbody>
+      </table>
+      <div class="insight"><div class="insight-icon">SAFE</div><div class="insight-text">子代理白名单<strong>不包含 dispatch_subagent</strong>，防递归；也<strong>不包含 update_todos</strong>，防止私改主计划。</div></div>
     </div>
   </div>
 </div>
 
 <div class="slide" id="s6">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
-  <div class="page-id">// step08 &nbsp;·&nbsp; <span>公共工具分发</span></div>
-  <div class="two-col wide-r">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
+  <div class="page-id">// lifecycle &nbsp;·&nbsp; <span>一次派遣的完整流程</span></div>
+  <div class="two-col wide-l">
     <div class="col">
-      <div class="tag">REFACTOR 07 · SHARED DISPATCH</div>
-      <div class="h-main">先抽公共工具<br><em>再嵌套新循环</em></div>
-      <div class="desc">run_command、web_fetch、load_skill 被抽到 execute_basic_tool，主循环和子循环都调用同一个分发函数。</div>
-      <div class="mod-grid">
-        <div class="mod-card g"><div class="mod-file">MAIN</div><div class="mod-name">主循环</div><div class="mod-methods"><span>update_todos</span>()<br><span>dispatch_subagent</span>()</div></div>
-        <div class="mod-card i"><div class="mod-file">SHARED</div><div class="mod-name">基础工具</div><div class="mod-methods"><span>run_command</span>()<br><span>web_fetch</span>()<br><span>load_skill</span>()</div></div>
+      <div class="tag">FLOW 06 · END TO END</div>
+      <div class="h-main">从用户一句话<br><em>到子代理回禀</em></div>
+      <div class="desc">理解子代理最好的方式，是跟着一条调用链走：主模型发 dispatch，工具创建子 runner，子 runner 自己循环用工具，最后结果压缩回主线。</div>
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">1</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">User 给主 Agent 下旨</div><div class="frow-sub">“派东厂探事去抓两个网页并总结差异”</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">2</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">主模型 emits dispatch_subagent</div><div class="frow-sub">agent_type + task + purpose</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">3</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">Dispatch 工具启动子 runner</div><div class="frow-sub">临时 history = [{role:user, content:task}]</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">4</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">子 runner 内部 tool_use 循环</div><div class="frow-sub">web_fetch / grep / read_file 输出留在子上下文</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">5</div></div><div class="frow-body"><div class="frow-name">final summary 回填主 history</div><div class="frow-sub">主线只多一条 tool_result</div></div></div>
       </div>
     </div>
     <div class="col">
-      <div class="code-card ind">
-        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label i">step08_subagent.py:149–172 · execute_basic_tool</div></div>
-        <div class="c-body">
-          <div><span class="ln">149</span><span class="kw">def </span><span class="fn">execute_basic_tool</span><span class="va">(block, prefix</span><span class="kw">: </span><span class="va">str </span><span class="kw">= </span><span class="st">""</span><span class="va">) </span><span class="kw">-&gt; </span><span class="va">str:</span></div>
-          <div><span class="ln">152</span><span class="va">&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">block.name </span><span class="kw">== </span><span class="st">"web_fetch"</span><span class="va">:</span></div>
-          <div><span class="ln">153</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;url </span><span class="kw">= </span><span class="va">block.input[</span><span class="st">"url"</span><span class="va">]</span></div>
-          <div><span class="ln">156</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="fn">print</span><span class="va">(</span><span class="kw">f</span><span class="st">"  [{prefix}网页获取]: {url}"</span><span class="va">)</span></div>
-          <div><span class="ln">157</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">return </span><span class="fn">web_fetch</span><span class="va">(url, mode, max_chars)</span></div>
-          <div class="hl"><span class="ln">159</span><span class="va">&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">block.name </span><span class="kw">== </span><span class="st">"run_command"</span><span class="va">:</span></div>
-          <div class="hl"><span class="ln">160</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;command </span><span class="kw">= </span><span class="va">block.input[</span><span class="st">"command"</span><span class="va">]</span></div>
-          <div class="hl"><span class="ln">162</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;result </span><span class="kw">= </span><span class="fn">subprocess.run</span><span class="va">(command, shell</span><span class="kw">=</span><span class="num">True</span><span class="va">, </span><span class="cm">…</span><span class="va">)</span></div>
-          <div class="hl"><span class="ln">163</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">return </span><span class="va">result.stdout </span><span class="kw">or </span><span class="va">result.stderr</span></div>
-          <div><span class="ln">167</span><span class="va">&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">block.name </span><span class="kw">== </span><span class="st">"load_skill"</span><span class="va">:</span></div>
-          <div><span class="ln">170</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">return </span><span class="va">SKILL_LOADER.</span><span class="fn">get_content</span><span class="va">(skill_name)</span></div>
+      <div class="terminal">
+        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">runtime.trace</div></div>
+        <div class="term-body">
+          <div><span class="prompt">[派遣小太监 #1 · dongchang_tanshi]</span> 抓网页差异</div>
+          <div><span class="dim">  ┌── subagent context start ──</span></div>
+          <div><span class="out">  [网页获取]: https://example.com</span></div>
+          <div><span class="out">  [网页获取]: https://example.org</span></div>
+          <div><span class="dim">  └── subagent context end (history 5 条)</span></div>
+          <div><span class="warn">[小太监回禀]:</span> 两站结构相同, 域名与说明不同...</div>
+          <div><span class="prompt">[主上下文压缩]:</span> 只追加 42 字</div>
         </div>
       </div>
+      <div class="insight"><div class="insight-icon">OBS</div><div class="insight-text">日志里的子 history 条数会增长，但主 history 只接住最后一段摘要。这是“上下文隔离”可观测的证据。</div></div>
     </div>
   </div>
 </div>
 
 <div class="slide" id="s7">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
-  <div class="page-id">// step08 &nbsp;·&nbsp; <span>run_subagent 内部循环</span></div>
-  <div class="two-col">
+  <div class="page-id">// concurrency &nbsp;·&nbsp; <span>并发子代理提高效率</span></div>
+  <div class="two-col wide-l">
     <div class="col">
-      <div class="tag">LOOP 08 · NESTED MESSAGE LOOP</div>
-      <div class="h-main">子代理本质上<br><em>是一个独立 Agent 循环</em></div>
-      <div class="desc">它拥有自己的 messages、system prompt、工具白名单和 max_turns。跑完后只返回 final text。</div>
-      <div class="flow-col">
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">01</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">messages = user task</div><div class="frow-sub">不共享主 history</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">02</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">client.messages.create</div><div class="frow-sub">SUBAGENT_SYSTEM_PROMPT + SUBAGENT_TOOLS</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">03</div></div><div class="frow-body"><div class="frow-name">return final</div><div class="frow-sub">主循环只拿到一段中文汇报</div></div></div>
-      </div>
+      <div class="tag">CONCURRENCY 05 · PARALLEL DISPATCH</div>
+      <div class="h-main">并发不是命令<br><em>是同帧多个 tool_use</em></div>
+      <div class="desc">工程化版本在 <span class="file">AgentRunner._execute_tool_blocks</span> 里做并发分组：连续多个 <span class="file">concurrency_safe</span> 工具会并行执行，再按原顺序回填。</div>
+      <div class="info-row hi"><div class="info-icon">↑</div><div><div class="info-name">该并发</div><div class="info-sub">差事互不依赖、读多写少、I/O 等待时间长</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">↓</div><div><div class="info-name">不该并发</div><div class="info-sub">后步依赖前步、共享可写资源、需要顺序确认</div></div></div>
+      <div class="insight"><div class="insight-icon">TRIGGER</div><div class="insight-text">只有模型同一轮真的发出多个 <strong>dispatch_subagent</strong> 时才会并发。简单任务可能被模型用一条 <strong>run_command</strong> 直接办完。</div></div>
     </div>
     <div class="col">
-      <div class="code-card green">
-        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">step08_subagent.py:219–258 · run_subagent</div></div>
-        <div class="c-body">
-          <div><span class="ln">219</span><span class="kw">def </span><span class="fn">run_subagent</span><span class="va">(task</span><span class="kw">: </span><span class="va">str, purpose</span><span class="kw">=</span><span class="st">""</span><span class="va">, max_turns</span><span class="kw">=</span><span class="num">10</span><span class="va">):</span></div>
-          <div><span class="ln">227</span><span class="va">&nbsp;&nbsp;messages </span><span class="kw">= </span><span class="va">[{</span><span class="st">"role"</span><span class="va">: </span><span class="st">"user"</span><span class="va">, </span><span class="st">"content"</span><span class="va">: task}]</span></div>
-          <div><span class="ln">229</span><span class="va">&nbsp;&nbsp;</span><span class="kw">for </span><span class="va">turn </span><span class="kw">in </span><span class="fn">range</span><span class="va">(max_turns):</span></div>
-          <div><span class="ln">230</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;msg </span><span class="kw">= </span><span class="va">client.messages.</span><span class="fn">create</span><span class="va">(</span></div>
-          <div><span class="ln">231</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;system</span><span class="kw">=</span><span class="va">SUBAGENT_SYSTEM_PROMPT, tools</span><span class="kw">=</span><span class="va">SUBAGENT_TOOLS,</span></div>
-          <div><span class="ln">235</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messages</span><span class="kw">=</span><span class="va">messages, </span><span class="cm">…</span><span class="va">)</span></div>
-          <div class="hl"><span class="ln">239</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">if </span><span class="va">msg.stop_reason </span><span class="kw">!= </span><span class="st">"tool_use"</span><span class="va">:</span></div>
-          <div class="hl"><span class="ln">240</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="kw">return </span><span class="fn">next</span><span class="va">(b.text </span><span class="kw">for </span><span class="va">b </span><span class="kw">in </span><span class="va">msg.content </span><span class="kw">if </span><span class="va">…)</span></div>
-          <div><span class="ln">249</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;content </span><span class="kw">= </span><span class="fn">execute_basic_tool</span><span class="va">(b, prefix</span><span class="kw">=</span><span class="st">"子·"</span><span class="va">)</span></div>
-          <div><span class="ln">255</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;messages.</span><span class="fn">append</span><span class="va">({</span><span class="st">"role"</span><span class="va">: </span><span class="st">"user"</span><span class="va">, </span><span class="st">"content"</span><span class="va">: results})</span></div>
-          <div><span class="ln">258</span><span class="va">&nbsp;&nbsp;</span><span class="kw">return </span><span class="st">"（小太监未能在限定回合内办妥差事）"</span></div>
+      <div class="terminal">
+        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">timeline.cmp</div></div>
+        <div class="term-body">
+          <div><span class="dim">// runner.py</span></div>
+          <div><span class="prompt">tool_use:</span> dispatch_subagent(step01)</div>
+          <div><span class="prompt">tool_use:</span> dispatch_subagent(step02)</div>
+          <div><span class="prompt">tool_use:</span> dispatch_subagent(step03)</div>
+          <div><span class="warn">[并发执行 3 个工具]</span></div>
+          <div>&nbsp;</div>
+          <div><span class="dim">// pool.map 保证结果按输入顺序返回</span></div>
+          <div><span class="out">tool_result #1 → step01 summary</span></div>
+          <div><span class="out">tool_result #2 → step02 summary</span></div>
+          <div><span class="out">tool_result #3 → step03 summary</span></div>
         </div>
+      </div>
+      <div style="display:flex;gap:0.5vw;margin-top:0.8vw;flex-wrap:wrap">
+        <span class="badge-g">不依赖</span>
+        <span class="badge-i">同帧 emit</span>
+        <span class="badge-o">order preserved</span>
       </div>
     </div>
   </div>
 </div>
 
 <div class="slide" id="s8">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// step08 &nbsp;·&nbsp; <span>dispatch_subagent 工具</span></div>
-  <div class="two-col wide-r">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
+  <div class="page-id">// guardrails &nbsp;·&nbsp; <span>工程取舍与安全边界</span></div>
+  <div class="two-col">
     <div class="col">
-      <div class="tag">TOOL 09 · MAIN TO SUB</div>
-      <div class="h-main">派发工具只暴露<br><em>task 与 purpose</em></div>
-      <div class="desc">主 Agent 不需要知道内部会调用几个工具。它只把差事写清楚，等待一段可读摘要。</div>
-      <div class="insight"><div class="insight-icon">API</div><div class="insight-text"><strong>task</strong> 是真正任务说明；<strong>purpose</strong> 只用于终端打印，方便观察哪次派发在干什么。</div></div>
+      <div class="tag">DESIGN 08 · SAFETY &amp; TRADEOFFS</div>
+      <div class="h-main">子代理能干活<br><em>但不能乱管家</em></div>
+      <div class="desc">工程化版本把权限收紧在代码层，而不是只靠 prompt 祈祷。身份可以活泼，边界必须硬。</div>
+      <div class="dec-grid">
+        <div class="dec-item" style="border-color:rgba(34,197,94,0.2);background:rgba(34,197,94,0.03)"><div class="dec-q">No Recursive Dispatch</div><div class="dec-a" style="color:#4ADE80">白名单不含 dispatch</div><div class="dec-note">子代理不能继续派子代理, 防止无限嵌套。</div></div>
+        <div class="dec-item" style="border-color:rgba(99,102,241,0.22);background:rgba(99,102,241,0.03)"><div class="dec-q">No Main Todo</div><div class="dec-a" style="color:#818CF8">白名单不含 update_todos</div><div class="dec-note">计划状态归主 Agent 管, 子代理只交局部结果。</div></div>
+        <div class="dec-item" style="border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.03)"><div class="dec-q">Max Turns</div><div class="dec-a" style="color:#FB923C">每种身份有轮数上限</div><div class="dec-note">探索失败要回报, 不能无限试错。</div></div>
+        <div class="dec-item" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.03)"><div class="dec-q">Model Routing</div><div class="dec-a" style="color:#22D3EE">并发由模型触发</div><div class="dec-note">模型没发多个 dispatch, 就不会并发。</div></div>
+      </div>
     </div>
-    <div class="col gap">
-      <div class="code-card green">
-        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">step08_subagent.py:344–360 · dispatch_subagent</div></div>
+    <div class="col">
+      <div class="code-card ind">
+        <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label i">agent/runner.py · safe group</div></div>
         <div class="c-body">
-          <div><span class="ln">344</span><span class="va">{</span></div>
-          <div><span class="ln">345</span><span class="va">&nbsp;&nbsp;</span><span class="st">"name"</span><span class="va">: </span><span class="st">"dispatch_subagent"</span><span class="va">,</span></div>
-          <div><span class="ln">346</span><span class="va">&nbsp;&nbsp;</span><span class="st">"description"</span><span class="va">: </span><span class="st">"派遣一个小太监去单独办差…"</span><span class="va">,</span></div>
-          <div><span class="ln">352</span><span class="va">&nbsp;&nbsp;</span><span class="st">"input_schema"</span><span class="va">: {</span></div>
-          <div><span class="ln">353</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="st">"type"</span><span class="va">: </span><span class="st">"object"</span><span class="va">,</span></div>
-          <div><span class="ln">354</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="st">"properties"</span><span class="va">: {</span></div>
-          <div class="hl"><span class="ln">355</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="st">"task"</span><span class="va">:    {</span><span class="st">"type"</span><span class="va">: </span><span class="st">"string"</span><span class="va">, </span><span class="st">"description"</span><span class="va">: </span><span class="cm">…</span><span class="va">},</span></div>
-          <div><span class="ln">356</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="st">"purpose"</span><span class="va">: {</span><span class="st">"type"</span><span class="va">: </span><span class="st">"string"</span><span class="va">, </span><span class="st">"description"</span><span class="va">: </span><span class="cm">…</span><span class="va">}</span></div>
-          <div><span class="ln">357</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;},</span></div>
-          <div class="hl"><span class="ln">358</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="st">"required"</span><span class="va">: [</span><span class="st">"task"</span><span class="va">]</span></div>
-          <div><span class="ln">359</span><span class="va">&nbsp;&nbsp;}</span></div>
-          <div><span class="ln">360</span><span class="va">}</span></div>
+          <div><span class="ln">01</span><span class="kw">if </span><span class="va">tool.concurrency_safe:</span></div>
+          <div><span class="ln">02</span><span class="va">&nbsp;&nbsp;group </span><span class="kw">= </span><span class="va">collect_contiguous_safe_tools()</span></div>
+          <div class="hl"><span class="ln">03</span><span class="va">&nbsp;&nbsp;</span><span class="kw">with </span><span class="fn">ThreadPoolExecutor</span><span class="va">(max_workers=</span><span class="fn">len</span><span class="va">(group)) </span><span class="kw">as </span><span class="va">pool:</span></div>
+          <div><span class="ln">04</span><span class="va">&nbsp;&nbsp;&nbsp;&nbsp;contents </span><span class="kw">= </span><span class="fn">list</span><span class="va">(pool.</span><span class="fn">map</span><span class="va">(execute, group))</span></div>
+          <div class="hl"><span class="ln">05</span><span class="kw">return </span><span class="va">tool_results_in_original_order</span></div>
         </div>
       </div>
-      <div class="terminal">
-        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">context compression</div></div>
-        <div class="term-body">
-          <div><span class="prompt">[派遣小太监 #1]</span> 抓 HN 头条</div>
-          <div><span class="dim">  ┌── subagent context start ──</span></div>
-          <div><span class="out">  [子·网页获取]: https://news.ycombinator.com</span></div>
-          <div><span class="dim">  └── subagent context end，回传 215 字</span></div>
-          <div><span class="warn">[主上下文压缩]:</span> 只追加 215 字</div>
-        </div>
-      </div>
+      <div class="insight"><div class="insight-icon">READ</div><div class="insight-text">如果你想稳定演示并发, 用户指令要明确“分别派多个小太监”。否则模型可能判断一条命令更经济, 直接走普通工具。</div></div>
     </div>
   </div>
 </div>
 
 <div class="slide" id="s9">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
-  <div class="page-id">// design &nbsp;·&nbsp; <span>关键取舍</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">DECISION 10 · GUARDRAILS</div>
-      <div class="h-main">这版实现的重点<br><em>是可控，而不是并发</em></div>
-      <div class="desc">教程里的子代理是串行同步执行：主循环等待它完成。这更适合解释上下文隔离和工具白名单。</div>
-      <div class="dec-grid">
-        <div class="dec-item" style="border-color:rgba(34,197,94,0.2);background:rgba(34,197,94,0.03)"><div class="dec-q">Plan State</div><div class="dec-a" style="color:#4ADE80">全量覆盖</div><div class="dec-note">每次传完整 todos，避免增量补丁合并歧义。</div></div>
-        <div class="dec-item" style="border-color:rgba(99,102,241,0.22);background:rgba(99,102,241,0.03)"><div class="dec-q">Sub Tools</div><div class="dec-a" style="color:#818CF8">工具白名单</div><div class="dec-note">子代理不能再派子代理，也不改主 todo。</div></div>
-        <div class="dec-item" style="border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.03)"><div class="dec-q">Loop Limit</div><div class="dec-a" style="color:#FB923C">max_turns</div><div class="dec-note">防止工具试错无限循环。</div></div>
-        <div class="dec-item" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.03)"><div class="dec-q">Main Context</div><div class="dec-a" style="color:#22D3EE">摘要回传</div><div class="dec-note">压缩执行轨迹，只留结论。</div></div>
-      </div>
-    </div>
-    <div class="col">
-      <table class="g-table">
-        <thead><tr><th>组件</th><th>s07</th><th>s08</th></tr></thead>
-        <tbody>
-          <tr><td>工具数</td><td>4</td><td>5</td></tr>
-          <tr><td>任务状态</td><td>显式 todo</td><td>沿用主状态</td></tr>
-          <tr><td>上下文</td><td>单一 history</td><td>主 + 子隔离</td></tr>
-          <tr><td>工具分发</td><td>循环内 if/elif</td><td>execute_basic_tool</td></tr>
-          <tr><td>防御机制</td><td>单 in_progress</td><td>白名单 + max_turns</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s11">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// engineering &nbsp;·&nbsp; <span>落地到主项目</span></div>
-  <div class="two-col wide-r">
-    <div class="col">
-      <div class="tag">BRIDGE 11 · TUTORIAL → PRODUCT</div>
-      <div class="h-main">从一次性脚本<br><em>到可复用模块</em></div>
-      <div class="desc">教学版只验证机制；主项目 <span class="file">agent/</span> 包按现有抽象沉淀，复用 Tool / ToolRegistry / AgentRunner，不另造轮子。</div>
-      <div class="info-row hi"><div class="info-icon">A</div><div><div class="info-name">Tool 抽象 + 装饰器</div><div class="info-sub">新工具沿用 @tool_parameters 风格</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">B</div><div><div class="info-name">ToolRegistry 共享</div><div class="info-sub">子代理按白名单从主 registry 借实例</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">C</div><div><div class="info-name">AgentRunner 即子循环</div><div class="info-sub">memory_store=None 即变身轻量 runner</div></div></div>
-    </div>
-    <div class="col">
-      <table class="g-table">
-        <thead><tr><th>路径</th><th>动作</th></tr></thead>
-        <tbody>
-          <tr><td><span class="file">agent/tools/todo.py</span></td><td>新增 · TodoStore + UpdateTodosTool</td></tr>
-          <tr><td><span class="file">agent/tools/dispatch.py</span></td><td>新增 · DispatchSubagentTool</td></tr>
-          <tr><td><span class="file">agent/subagents/</span></td><td>新增 · spec + registry</td></tr>
-          <tr><td><span class="file">agent/runner.py</span></td><td>修改 · 加 max_turns 参数</td></tr>
-          <tr><td><span class="file">agent/loop.py</span></td><td>修改 · 实例化与接线</td></tr>
-          <tr><td><span class="file">templates/subagents/*.md</span></td><td>新增 · researcher / general</td></tr>
-          <tr><td><span class="file">templates/agent/identity.md</span></td><td>修改 · 追加行事规矩</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s12">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-i"></div></div>
-  <div class="page-id">// engineering &nbsp;·&nbsp; <span>关键设计决策</span></div>
+  <div class="page-id">// summary &nbsp;·&nbsp; <span>完整心智模型</span></div>
   <div class="two-col wide-l">
     <div class="col">
-      <div class="tag">CHOICE 12 · ENGINEERING CALLS</div>
-      <div class="h-main">把对的取舍<br><em>提前钉死</em></div>
-      <div class="desc">教学版能跑就行；工程版要<strong style="color:#22C55E">可控、可观测、防越权</strong>。每条决策都对应一处运行时兜底。</div>
-      <div class="insight"><div class="insight-icon">CORE</div><div class="insight-text">先想清楚再动手 —— 后期重构成本，远高于一次想清楚的成本。</div></div>
-    </div>
-    <div class="col">
-      <div class="dec-grid">
-        <div class="dec-item" style="border-color:rgba(34,197,94,0.2);background:rgba(34,197,94,0.03)">
-          <div class="dec-q">PLAN</div>
-          <div class="dec-a" style="color:#4ADE80">工具而非子代理</div>
-          <div class="dec-note">计划要可动态调整，子代理一返回就冻结。</div>
-        </div>
-        <div class="dec-item" style="border-color:rgba(99,102,241,0.22);background:rgba(99,102,241,0.03)">
-          <div class="dec-q">SUBAGENT</div>
-          <div class="dec-a" style="color:#818CF8">预设身份</div>
-          <div class="dec-note">researcher 只读 / general 全工具，可测可审。</div>
-        </div>
-        <div class="dec-item" style="border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.03)">
-          <div class="dec-q">WHITELIST</div>
-          <div class="dec-a" style="color:#FB923C">写在代码里</div>
-          <div class="dec-note">tool_names 在 registry.py；模板只放身份文案。</div>
-        </div>
-        <div class="dec-item" style="border-color:rgba(34,211,238,0.2);background:rgba(34,211,238,0.03)">
-          <div class="dec-q">TODO STATE</div>
-          <div class="dec-a" style="color:#22D3EE">完成即清, 未完则推</div>
-          <div class="dec-note">stop_reason 时校验残单：未办妥回推 history 续跑, 办妥则重置 TODOS。</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s13">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
-  <div class="page-id">// demo &nbsp;·&nbsp; <span>跑起来是这样</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">DEMO 13 · TERMINAL TRACE</div>
-      <div class="h-main">终端里看到的<br><em>计划与派遣</em></div>
-      <div class="desc">复杂任务到来时，主 Agent 先 plan 拆步；遇到细节就派子代理；回禀进主上下文。每一步都打印边界，让视频观众看清主/子上下文如何分割。</div>
-      <div class="info-row hi"><div class="info-icon">↑</div><div><div class="info-name">[计划已更新]</div><div class="info-sub">每次 update_todos 重绘 todolist</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">┌</div><div><div class="info-name">[派遣小太监]</div><div class="info-sub">┌── ──┘ 边界框出子上下文</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">↓</div><div><div class="info-name">[主上下文压缩]</div><div class="info-sub">显式打印子代理回传字数</div></div></div>
-    </div>
-    <div class="col">
-      <div class="terminal">
-        <div class="term-bar"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="term-title">python agent.py · live</div></div>
-        <div class="term-body">
-          <div><span class="prompt">You🫅 :</span> 调研 step07/08 在主项目里如何落地</div>
-          <div>&nbsp;</div>
-          <div><span class="warn">[计划已更新]</span></div>
-          <div><span class="out">&nbsp;&nbsp;[~] 1. 列主项目现有工具</span></div>
-          <div><span class="out">&nbsp;&nbsp;[ ] 2. 派 researcher 读 step07/08</span></div>
-          <div><span class="out">&nbsp;&nbsp;[ ] 3. 整理工程化要点回奏</span></div>
-          <div>&nbsp;</div>
-          <div><span class="warn">[派遣小太监 #1 · researcher]:</span> 分析 step07/08</div>
-          <div><span class="dim">&nbsp;&nbsp;┌── subagent context start ──</span></div>
-          <div><span class="out">&nbsp;&nbsp;[子·read_file]: code/step07_plan_todolist.py</span></div>
-          <div><span class="out">&nbsp;&nbsp;[子·read_file]: code/step08_subagent.py</span></div>
-          <div><span class="dim">&nbsp;&nbsp;└── subagent context end (6 轮, 312 字) ──</span></div>
-          <div><span class="warn">[主上下文压缩]:</span> 仅追加 312 字</div>
-          <div>&nbsp;</div>
-          <div><span class="prompt">大内总管:</span> 奉天承运皇帝诏曰…</div>
-          <div>&nbsp;</div>
-          <div><span class="warn">[最终计划状态 - 全部办妥]</span></div>
-          <div><span class="out">&nbsp;&nbsp;[x] 1. 列主项目现有工具</span></div>
-          <div><span class="out">&nbsp;&nbsp;[x] 2. 派 researcher 读 step07/08</span></div>
-          <div><span class="out">&nbsp;&nbsp;[x] 3. 整理工程化要点回奏</span></div>
-          <div><span class="dim">&nbsp;&nbsp;TODOS = []  # 重置, 待下一轮</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s10">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// summary &nbsp;·&nbsp; <span>教学闭环 + 工程闭环</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">SUMMARY 14 · FROM TOOL TO WORKFLOW</div>
-      <div class="h-main">第四期完成的是<br><em>Agent 工作流骨架</em></div>
-      <div class="desc">s05 让 Agent 会动手；s07 让它会规划；s08 让它能把细节委派出去；s11–13 把这些机制沉淀为主项目 <span class="file">agent/</span> 包里的可复用模块。</div>
+      <div class="tag">SUMMARY 09 · MENTAL MODEL</div>
+      <div class="h-main">一句话理解<br><em>工程化子代理</em></div>
+      <div class="desc">它是一个特殊工具：输入是差事和身份，内部临时启动一个受限 AgentRunner，输出是一段高密度回禀。主 Agent 继续负责计划、调度和最终回答。</div>
       <div style="display:flex;gap:0.5vw;flex-wrap:wrap">
-        <span class="badge-g">Observe</span>
-        <span class="badge-i">Delegate</span>
-        <span class="badge-o">Compress</span>
-        <span class="badge-dim">Guardrails</span>
+        <span class="badge-g">独立 history</span>
+        <span class="badge-i">工具白名单</span>
+        <span class="badge-o">并发派遣</span>
+        <span class="badge-dim">摘要回填</span>
       </div>
     </div>
     <div class="col">
       <div class="flow-col">
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">s05</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name dim">Tool Use</div><div class="frow-sub dim">能调用外部能力</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">s06</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name dim">Skills</div><div class="frow-sub dim">能加载专项知识</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">s07</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">Plan Todolist</div><div class="frow-sub">先列清单，再逐项执行</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">s08</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">Subagent</div><div class="frow-sub">细节独立执行，摘要回传</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">agent/</div></div><div class="frow-body"><div class="frow-name">Engineered</div><div class="frow-sub">沉淀为可复用模块 + 预设身份</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">s07</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name dim">Plan</div><div class="frow-sub dim">主 Agent 知道要做什么</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">s08</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">Dispatch</div><div class="frow-sub">把细节交给独立上下文执行</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">agent/</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">Engineering</div><div class="frow-sub">SubagentRegistry + DispatchTool + AgentRunner</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">next</div></div><div class="frow-body"><div class="frow-name">Routing</div><div class="frow-sub">进一步可做硬路由、任务拆分器、结果聚合器</div></div></div>
       </div>
-      <div class="insight"><div class="insight-icon">NEXT</div><div class="insight-text">下一步可继续演进到 <strong>并发子代理 / 结果聚合 / 失败重试 / 权限边界</strong>。</div></div>
     </div>
   </div>
 </div>
@@ -531,7 +428,7 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 <div class="nav">
   <div class="nav-btn" id="prev">&#8592;</div>
   <div class="nav-dots" id="dots"></div>
-  <div class="nav-count" id="count">1 / 11</div>
+  <div class="nav-count" id="count">1 / 8</div>
   <div class="nav-btn" id="next">&#8594;</div>
 </div>
 

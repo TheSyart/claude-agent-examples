@@ -4,6 +4,7 @@ import subprocess
 import urllib.request
 import yaml
 import anthropic
+from concurrent.futures import ThreadPoolExecutor
 from html.parser import HTMLParser
 from pathlib import Path
 from dotenv import load_dotenv
@@ -147,7 +148,7 @@ def update_todos(todos: list[dict]) -> str:
 
 # ============== 公共工具分发：主循环与子代理共用 ==============
 def execute_basic_tool(block, prefix: str = "") -> str:
-    """处理 run_command / web_fetch / load_skill 三个基础工具，返回字符串内容。
+    """处理基础工具，返回字符串内容。
     prefix 用于在终端打印时区分主/子上下文（例如 prefix='子·'）。"""
     if block.name == "web_fetch":
         url = block.input["url"]
@@ -169,19 +170,51 @@ def execute_basic_tool(block, prefix: str = "") -> str:
         print(f"  [{prefix}加载技能]: {skill_name}")
         return SKILL_LOADER.get_content(skill_name)
 
-    return f"Error: Unknown basic tool '{block.name}'"
+    if block.name == "read_file":
+        path = block.input["path"]
+        print(f"  [{prefix}读取文件]: {path}")
+        try:
+            return Path(path).read_text(encoding="utf-8")
+        except Exception as e:
+            return f"Error reading {path}: {e}"
+
+    if block.name == "write_file":
+        path = block.input["path"]
+        content = block.input["content"]
+        print(f"  [{prefix}写入文件]: {path}")
+        try:
+            p = Path(path)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(content, encoding="utf-8")
+            return f"写入成功: {path}"
+        except Exception as e:
+            return f"Error writing {path}: {e}"
+
+    if block.name == "glob":
+        pattern = block.input["pattern"]
+        print(f"  [{prefix}文件搜索]: {pattern}")
+        matches = sorted(str(p) for p in Path(".").glob(pattern))
+        return "\n".join(matches) if matches else "(无匹配)"
+
+    if block.name == "grep":
+        pattern = block.input["pattern"]
+        path = block.input.get("path", ".")
+        print(f"  [{prefix}内容搜索]: {pattern} in {path}")
+        result = subprocess.run(
+            ["grep", "-r", "--include=*.py", "--include=*.md", "-n", pattern, path],
+            capture_output=True, text=True
+        )
+        return result.stdout or "(无匹配)"
+
+    return f"Error: Unknown tool '{block.name}'"
 
 
-# ============== 子代理（小太监） ==============
-SUBAGENT_SYSTEM_PROMPT = """你是小太监，奉总管之命专办一件差事。
-- 不必使用"奉天承运皇帝诏曰"前缀，那是总管对皇上的礼数。
-- 用工具尽快把差事办妥，最后用一段简短中文向总管回禀结果。
-- 只回禀结论与关键信息，不要复述每一步细节。
-- 你不能再派遣其他小太监，所有差事自己跑工具完成。"""
+# ============== 子代理预设身份 ==============
+# 身份在 system_prompt 中定义，工具白名单在代码中控制（不放进 prompt）。
+# 这里故意使用宫廷内官职位做角色名：既贴合教程人设，也让不同子代理的职责边界更好记。
 
-# 子代理工具集：基础三件套，不含 update_todos / dispatch_subagent
-SUBAGENT_TOOLS = [
-    {
+_TOOL_SCHEMAS: dict[str, dict] = {
+    "run_command": {
         "name": "run_command",
         "description": "在终端执行一条 shell 命令并返回输出",
         "input_schema": {
@@ -190,7 +223,7 @@ SUBAGENT_TOOLS = [
             "required": ["command"]
         }
     },
-    {
+    "web_fetch": {
         "name": "web_fetch",
         "description": "获取指定 URL 的网页内容，支持文本提取模式",
         "input_schema": {
@@ -203,7 +236,7 @@ SUBAGENT_TOOLS = [
             "required": ["url"]
         }
     },
-    {
+    "load_skill": {
         "name": "load_skill",
         "description": "加载指定技能的详细知识内容",
         "input_schema": {
@@ -211,27 +244,165 @@ SUBAGENT_TOOLS = [
             "properties": {"skill_name": {"type": "string"}},
             "required": ["skill_name"]
         }
-    }
-]
+    },
+    "read_file": {
+        "name": "read_file",
+        "description": "读取本地文件内容",
+        "input_schema": {
+            "type": "object",
+            "properties": {"path": {"type": "string", "description": "文件路径"}},
+            "required": ["path"]
+        }
+    },
+    "write_file": {
+        "name": "write_file",
+        "description": "写入文件内容（覆盖）",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path":    {"type": "string"},
+                "content": {"type": "string"}
+            },
+            "required": ["path", "content"]
+        }
+    },
+    "glob": {
+        "name": "glob",
+        "description": "按 glob 模式搜索工作区文件",
+        "input_schema": {
+            "type": "object",
+            "properties": {"pattern": {"type": "string"}},
+            "required": ["pattern"]
+        }
+    },
+    "grep": {
+        "name": "grep",
+        "description": "在工作区文件中搜索文本内容",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "pattern": {"type": "string"},
+                "path":    {"type": "string"}
+            },
+            "required": ["pattern"]
+        }
+    },
+}
+
+def build_subagent_prompt(title: str, duty: str, boundary: str) -> str:
+    return (
+        f"你是{title}，奉总管之命专办一件差事。\n"
+        f"- 职司：{duty}\n"
+        f"- 边界：{boundary}\n"
+        "- 不必使用\"奉天承运皇帝诏曰\"前缀，那是总管对皇上的礼数。\n"
+        "- 用工具尽快把差事办妥，最后用一段简短中文向总管回禀结果。\n"
+        "- 只回禀结论与关键信息，不要复述每一步细节。\n"
+        "- 你不能再派遣其他小太监，所有差事自己跑工具完成。"
+    )
+
+
+SUBAGENT_SPECS = {
+    # 小黄门：宫中通传、跑腿的小内侍。适合短平快的只读探路。
+    "xiaohuangmen": {
+        "title": "通传小黄门",
+        "system_prompt": build_subagent_prompt(
+            "通传小黄门",
+            "传话跑腿、快速探路、确认简单事实。",
+            "只办轻量只读差事；若发现需要大改或长时间探索，回禀总管改派专职内官。",
+        ),
+        "tools": ["run_command", "read_file", "glob", "grep"],
+        "max_turns": 8,
+    },
+    # 司礼监掌文书机要，这里取“随堂”做文书型子代理。
+    "sili_suitang": {
+        "title": "司礼监随堂小太监",
+        "system_prompt": build_subagent_prompt(
+            "司礼监随堂小太监",
+            "查阅文书、阅读代码、整理提纲、归纳结论。",
+            "只读不写；不得修改文件，只把文书脉络和关键判断回禀总管。",
+        ),
+        "tools": ["load_skill", "read_file", "glob", "grep"],
+        "max_turns": 12,
+    },
+    # 东厂负责查访缉事，这里用于外部网页、搜索、探索性调查。
+    "dongchang_tanshi": {
+        "title": "东厂探事小太监",
+        "system_prompt": build_subagent_prompt(
+            "东厂探事小太监",
+            "外出查访、抓取网页、搜罗线索、比对资料来源。",
+            "只读不写；运行命令时只许做查询类操作，不得改动本地文件。",
+        ),
+        "tools": ["run_command", "web_fetch", "load_skill", "read_file", "glob", "grep"],
+        "max_turns": 15,
+    },
+    # 尚宝监掌印信宝册，这里用于盘点、校验、对账。
+    "shangbao_dianbu": {
+        "title": "尚宝监典簿小太监",
+        "system_prompt": build_subagent_prompt(
+            "尚宝监典簿小太监",
+            "清点文件、核对清单、校验结果、整理表册。",
+            "只读不写；重点回禀差异、遗漏、风险点和可复核证据。",
+        ),
+        "tools": ["run_command", "read_file", "glob", "grep"],
+        "max_turns": 12,
+    },
+    # 内官监掌宫中营造器用，这里用于真正动手改文件、落地实现。
+    "neiguan_yingzao": {
+        "title": "内官监营造小太监",
+        "system_prompt": build_subagent_prompt(
+            "内官监营造小太监",
+            "修造工程、改写文件、搭建目录、跑命令验收。",
+            "可读写可执行；动手前先看清现状，回禀时列出改了什么和验证结果。",
+        ),
+        "tools": ["run_command", "web_fetch", "load_skill", "read_file", "write_file", "glob", "grep"],
+        "max_turns": 20,
+    },
+}
+
+SUBAGENT_ALIASES = {
+    # 向后兼容旧版 researcher/general 命名。
+    "researcher": "dongchang_tanshi",
+    "general": "neiguan_yingzao",
+}
+
+SUBAGENT_TYPE_OPTIONS = list(SUBAGENT_SPECS.keys())
+
+
+def resolve_subagent_type(agent_type: str) -> str:
+    normalized = (agent_type or "neiguan_yingzao").strip()
+    normalized = SUBAGENT_ALIASES.get(normalized, normalized)
+    if normalized not in SUBAGENT_SPECS:
+        return "neiguan_yingzao"
+    return normalized
 
 _SUBAGENT_COUNTER = 0
 
-def run_subagent(task: str, purpose: str = "", max_turns: int = 10) -> str:
-    """启动一个独立 message loop 的子代理，跑完后只返回最终文本给主 agent。"""
+def run_subagent(task: str, agent_type: str = "neiguan_yingzao",
+                 purpose: str = "", max_turns: int | None = None) -> str:
+    """启动一个独立 message loop 的子代理，跑完后只返回最终文本给主 agent。
+
+    agent_type: SUBAGENT_SPECS 中的宫廷职位名；旧版 researcher/general 会自动映射。
+    """
     global _SUBAGENT_COUNTER
     _SUBAGENT_COUNTER += 1
     label = purpose or task[:40]
-    print(f"\n[派遣小太监 #{_SUBAGENT_COUNTER}]: {label}")
+
+    agent_type = resolve_subagent_type(agent_type)
+    spec = SUBAGENT_SPECS[agent_type]
+    turns = max_turns if max_turns is not None else spec["max_turns"]
+    tools = [_TOOL_SCHEMAS[t] for t in spec["tools"]]
+
+    print(f"\n[派遣小太监 #{_SUBAGENT_COUNTER}({spec['title']} / {agent_type})]: {label}")
     print("  ┌── subagent context start ──")
 
     messages = [{"role": "user", "content": task}]
 
-    for turn in range(max_turns):
+    for turn in range(turns):
         msg = client.messages.create(
             model=MODEL,
             max_tokens=2000,
-            system=SUBAGENT_SYSTEM_PROMPT,
-            tools=SUBAGENT_TOOLS,
+            system=spec["system_prompt"],
+            tools=tools,
             messages=messages,
         )
         messages.append({"role": "assistant", "content": msg.content})
@@ -246,7 +417,7 @@ def run_subagent(task: str, purpose: str = "", max_turns: int = 10) -> str:
         for b in msg.content:
             if b.type != "tool_use":
                 continue
-            content = execute_basic_tool(b, prefix="子·")
+            content = execute_basic_tool(b, prefix=f"子({spec['title']})·")
             results.append({
                 "type": "tool_result",
                 "tool_use_id": b.id,
@@ -254,7 +425,7 @@ def run_subagent(task: str, purpose: str = "", max_turns: int = 10) -> str:
             })
         messages.append({"role": "user", "content": results})
 
-    print(f"  └── subagent context end (达到 {max_turns} 轮上限，未办妥) ──\n")
+    print(f"  └── subagent context end (达到 {turns} 轮上限，未办妥) ──\n")
     return "（小太监未能在限定回合内办妥差事）"
 
 
@@ -275,8 +446,16 @@ SYSTEM_PROMPT = f"""
 3. 简单的一句话问答（无需多步骤）不必生成 todolist，直接回答即可。
 4. 遇到不熟悉的专题，请先调用 load_skill 工具加载对应知识，再继续。
 5. 遇到细节繁多但与主线对话无关的差事（如抓多个网页、批量跑命令、查找文件内容、
-   探索性搜索），应**派遣小太监**（dispatch_subagent）去办，主上下文只听汇报即可，
-   避免冗长的工具输出污染你与皇上的对话。
+   探索性搜索），应**派遣小太监**（dispatch_subagent）去办，主上下文只听汇报即可。
+6. 若多件差事互不依赖，可在同一次回复中同时派遣多个小太监，并发执行节省时间。
+
+【小太监身份选择】
+优先选择权限最窄、职司最贴合的身份：
+- xiaohuangmen（通传小黄门）：轻量只读，适合短命令、快速确认、跑腿探路。
+- sili_suitang（司礼监随堂小太监）：只读文书，适合阅读代码、整理提纲、归纳结论。
+- dongchang_tanshi（东厂探事小太监）：只读查访，适合抓网页、查资料、探索性搜索。
+- shangbao_dianbu（尚宝监典簿小太监）：只读核验，适合盘点文件、校对清单、检查遗漏。
+- neiguan_yingzao（内官监营造小太监）：可读写可执行，适合修改文件、搭建工程、落地实现。
 
 当前可用技能：
 {SKILL_LOADER.get_descriptions()}"""
@@ -346,16 +525,34 @@ TOOLS = [
         "description": (
             "派遣一个小太监去单独办差。"
             "适用于：抓取并阅读多个网页、批量执行命令并整理输出、需要试错的探索性任务。"
-            "小太监有自己独立的上下文，办完只回传一段文字总结，不污染主上下文。"
+            "小太监有自己独立的上下文，办完只回传一段文字总结，不污染主上下文。\n"
+            "若多件差事互不依赖，可在同一回复中发出多个 dispatch_subagent，并发执行。\n"
             "请在 task 中写清要做什么、希望返回什么格式的总结。"
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "task":    {"type": "string", "description": "交代给小太监的差事说明"},
-                "purpose": {"type": "string", "description": "一句话用途标签（可选），仅用于终端打印"}
+                "task": {
+                    "type": "string",
+                    "description": "交代给小太监的差事说明"
+                },
+                "agent_type": {
+                    "type": "string",
+                    "enum": SUBAGENT_TYPE_OPTIONS,
+                    "description": (
+                        "小太监身份：xiaohuangmen（通传跑腿）、"
+                        "sili_suitang（司礼监文书）、"
+                        "dongchang_tanshi（东厂查访）、"
+                        "shangbao_dianbu（尚宝监典簿核验）、"
+                        "neiguan_yingzao（内官监营造，可读写）"
+                    )
+                },
+                "purpose": {
+                    "type": "string",
+                    "description": "一句话用途标签（可选），仅用于终端打印"
+                }
             },
-            "required": ["task"]
+            "required": ["task", "agent_type"]
         }
     }
 ]
@@ -401,32 +598,50 @@ while True:
                 TODOS = []
             break
 
-        tool_results = []
-        for block in message.content:
-            if block.type != "tool_use":
-                continue
+        # 将 tool_use 块拆分为普通工具 vs dispatch_subagent
+        tool_blocks = [b for b in message.content if b.type == "tool_use"]
+        dispatch_blocks = [b for b in tool_blocks if b.name == "dispatch_subagent"]
+        other_blocks   = [b for b in tool_blocks if b.name != "dispatch_subagent"]
 
+        results_map: dict[str, str] = {}
+
+        # 普通工具顺序执行
+        for block in other_blocks:
             if block.name in ("run_command", "web_fetch", "load_skill"):
-                content = execute_basic_tool(block, prefix="")
-
+                results_map[block.id] = execute_basic_tool(block, prefix="")
             elif block.name == "update_todos":
-                content = update_todos(block.input.get("todos", []))
-
-            elif block.name == "dispatch_subagent":
-                task = block.input["task"]
-                purpose = block.input.get("purpose", "")
-                summary = run_subagent(task, purpose)
-                # 上下文压缩观测：主 history 只多一条结果，长度 = 子代理最终摘要
-                print(f"[主上下文压缩]: 子代理仅向主 history 追加 {len(summary)} 字\n")
-                content = summary
-
+                results_map[block.id] = update_todos(block.input.get("todos", []))
             else:
-                content = f"Error: Unknown tool '{block.name}'"
+                results_map[block.id] = f"Error: Unknown tool '{block.name}'"
 
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": block.id,
-                "content": content
-            })
+        # dispatch_subagent：多个时并发，单个时直接运行
+        if len(dispatch_blocks) > 1:
+            print(f"\n[并发派遣 {len(dispatch_blocks)} 个小太监...]\n")
 
+            def _run_one(block):
+                return block.id, run_subagent(
+                    task=block.input["task"],
+                    agent_type=block.input.get("agent_type", "neiguan_yingzao"),
+                    purpose=block.input.get("purpose", ""),
+                )
+
+            with ThreadPoolExecutor(max_workers=len(dispatch_blocks)) as pool:
+                for block_id, summary in pool.map(_run_one, dispatch_blocks):
+                    print(f"[主上下文压缩]: 子代理仅向主 history 追加 {len(summary)} 字\n")
+                    results_map[block_id] = summary
+        else:
+            for block in dispatch_blocks:
+                summary = run_subagent(
+                    task=block.input["task"],
+                    agent_type=block.input.get("agent_type", "neiguan_yingzao"),
+                    purpose=block.input.get("purpose", ""),
+                )
+                print(f"[主上下文压缩]: 子代理仅向主 history 追加 {len(summary)} 字\n")
+                results_map[block.id] = summary
+
+        # 按原始顺序收集结果
+        tool_results = [
+            {"type": "tool_result", "tool_use_id": b.id, "content": results_map[b.id]}
+            for b in tool_blocks
+        ]
         history.append({"role": "user", "content": tool_results})
