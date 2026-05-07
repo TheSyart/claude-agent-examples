@@ -208,18 +208,13 @@ def execute_basic_tool(block, prefix: str = "") -> str:
 
     return f"Error: Unknown tool '{block.name}'"
 
-
-# ============== 子代理预设身份 ==============
-# 身份在 system_prompt 中定义，工具白名单在代码中控制（不放进 prompt）。
-# 这里故意使用宫廷内官职位做角色名：既贴合教程人设，也让不同子代理的职责边界更好记。
-
 _TOOL_SCHEMAS: dict[str, dict] = {
     "run_command": {
         "name": "run_command",
         "description": "在终端执行一条 shell 命令并返回输出",
         "input_schema": {
             "type": "object",
-            "properties": {"command": {"type": "string"}},
+            "properties": {"command": {"type": "string", "description": "要执行的 shell 命令"}},
             "required": ["command"]
         }
     },
@@ -229,19 +224,21 @@ _TOOL_SCHEMAS: dict[str, dict] = {
         "input_schema": {
             "type": "object",
             "properties": {
-                "url":          {"type": "string"},
-                "extract_mode": {"type": "string"},
-                "max_chars":    {"type": "integer"}
+                "url":          {"type": "string",  "description": "要访问的完整 URL"},
+                "extract_mode": {"type": "string",  "description": "提取模式：text（纯文本，默认）或 raw（原始 HTML）"},
+                "max_chars":    {"type": "integer", "description": "最大返回字符数，默认 8000"}
             },
             "required": ["url"]
         }
     },
     "load_skill": {
         "name": "load_skill",
-        "description": "加载指定技能的详细知识内容",
+        "description": "加载指定技能的详细知识内容，在回答相关问题前调用",
         "input_schema": {
             "type": "object",
-            "properties": {"skill_name": {"type": "string"}},
+            "properties": {
+                "skill_name": {"type": "string", "description": "技能名称，必须是系统提示中列出的可用技能之一"}
+            },
             "required": ["skill_name"]
         }
     },
@@ -289,6 +286,9 @@ _TOOL_SCHEMAS: dict[str, dict] = {
     },
 }
 
+# ============== 子代理预设身份 ==============
+# 身份在 system_prompt 中定义，工具白名单在代码中控制（不放进 prompt）。
+# 这里故意使用宫廷内官职位做角色名：既贴合教程人设，也让不同子代理的职责边界更好记。
 def build_subagent_prompt(title: str, duty: str, boundary: str) -> str:
     return (
         f"你是{title}，奉总管之命专办一件差事。\n"
@@ -359,18 +359,11 @@ SUBAGENT_SPECS = {
     },
 }
 
-SUBAGENT_ALIASES = {
-    # 向后兼容旧版 researcher/general 命名。
-    "researcher": "dongchang_tanshi",
-    "general": "neiguan_yingzao",
-}
-
 SUBAGENT_TYPE_OPTIONS = list(SUBAGENT_SPECS.keys())
 
 
 def resolve_subagent_type(agent_type: str) -> str:
     normalized = (agent_type or "neiguan_yingzao").strip()
-    normalized = SUBAGENT_ALIASES.get(normalized, normalized)
     if normalized not in SUBAGENT_SPECS:
         return "neiguan_yingzao"
     return normalized
@@ -381,7 +374,7 @@ def run_subagent(task: str, agent_type: str = "neiguan_yingzao",
                  purpose: str = "", max_turns: int | None = None) -> str:
     """启动一个独立 message loop 的子代理，跑完后只返回最终文本给主 agent。
 
-    agent_type: SUBAGENT_SPECS 中的宫廷职位名；旧版 researcher/general 会自动映射。
+    agent_type: SUBAGENT_SPECS 中的宫廷职位名。
     """
     global _SUBAGENT_COUNTER
     _SUBAGENT_COUNTER += 1
@@ -461,39 +454,9 @@ SYSTEM_PROMPT = f"""
 {SKILL_LOADER.get_descriptions()}"""
 
 TOOLS = [
-    {
-        "name": "run_command",
-        "description": "在终端执行一条 shell 命令并返回输出",
-        "input_schema": {
-            "type": "object",
-            "properties": {"command": {"type": "string", "description": "要执行的 shell 命令"}},
-            "required": ["command"]
-        }
-    },
-    {
-        "name": "web_fetch",
-        "description": "获取指定 URL 的网页内容，支持文本提取模式",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "url":          {"type": "string",  "description": "要访问的完整 URL"},
-                "extract_mode": {"type": "string",  "description": "提取模式：text（纯文本，默认）或 raw（原始 HTML）"},
-                "max_chars":    {"type": "integer", "description": "最大返回字符数，默认 8000"}
-            },
-            "required": ["url"]
-        }
-    },
-    {
-        "name": "load_skill",
-        "description": "加载指定技能的详细知识内容，在回答相关问题前调用",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "skill_name": {"type": "string", "description": "技能名称，必须是系统提示中列出的可用技能之一"}
-            },
-            "required": ["skill_name"]
-        }
-    },
+    _TOOL_SCHEMAS["run_command"],
+    _TOOL_SCHEMAS["web_fetch"],
+    _TOOL_SCHEMAS["load_skill"],
     {
         "name": "update_todos",
         "description": (

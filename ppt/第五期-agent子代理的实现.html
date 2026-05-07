@@ -153,8 +153,90 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 .footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:0.7vw;color:#1E3A2A;z-index:20}
 .footer span{color:#166534}
 
+.intro-stage{position:relative;z-index:10;height:100%;padding:3.1vw 3.6vw 3.4vw}
+.story-board{position:relative;width:100%;height:82vh;border:0.06vw solid rgba(34,197,94,0.16);border-radius:0.9vw;background:radial-gradient(circle at 50% 48%,rgba(34,197,94,0.11),transparent 28%),radial-gradient(circle at 84% 25%,rgba(99,102,241,0.1),transparent 25%),radial-gradient(circle at 18% 76%,rgba(251,146,60,0.08),transparent 22%),linear-gradient(180deg,rgba(2,8,16,0.96),rgba(3,12,22,0.86));overflow:hidden;box-shadow:0 2vw 6vw rgba(0,0,0,0.22),inset 0 0 4vw rgba(34,197,94,0.05)}
+.story-board::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(34,197,94,0.035) 0.06vw,transparent 0.06vw),linear-gradient(90deg,rgba(34,197,94,0.025) 0.06vw,transparent 0.06vw);background-size:4.2vw 4.2vw}
+.story-board::after{content:"";position:absolute;left:50%;top:50%;width:42vw;height:42vw;border-radius:50%;transform:translate(-50%,-50%);border:0.06vw dashed rgba(34,197,94,0.12);box-shadow:0 0 4vw rgba(34,197,94,0.04)}
+.scene-scan{position:absolute;inset:-20%;z-index:1;background:linear-gradient(110deg,transparent 0%,transparent 44%,rgba(34,197,94,0.07) 48%,rgba(129,140,248,0.08) 50%,transparent 56%,transparent 100%);animation:sceneScan 5.6s ease-in-out infinite;pointer-events:none}
+.spark{position:absolute;width:0.28vw;height:0.28vw;border-radius:50%;background:#4ADE80;box-shadow:0 0 0.75vw rgba(74,222,128,0.9);opacity:0.32;z-index:3;animation:sparkFloat 6.4s ease-in-out infinite}
+.spark.s1{left:17%;top:18%;animation-delay:-0.2s}.spark.s2{left:32%;top:72%;animation-delay:-1.1s}.spark.s3{left:71%;top:17%;animation-delay:-2.3s}.spark.s4{left:88%;top:62%;animation-delay:-3s}.spark.s5{left:49%;top:19%;animation-delay:-3.8s}.spark.s6{left:12%;top:58%;animation-delay:-4.6s}.spark.s7{left:62%;top:82%;animation-delay:-5.1s}.spark.s8{left:82%;top:39%;animation-delay:-5.7s}
+.scene-title{position:absolute;left:3vw;top:2.1vw;z-index:12;padding:0.45vw 0.7vw;border:0.06vw solid rgba(34,197,94,0.18);border-radius:0.5vw;background:rgba(2,8,16,0.68)}
+.scene-kicker{font-family:'JetBrains Mono',monospace;font-size:0.56vw;color:#315C3C;margin-bottom:0.18vw}
+.scene-heading{font-size:1.05vw;font-weight:900;line-height:1;color:#F8FAFC;letter-spacing:0;white-space:nowrap}
+.scene-heading span{color:#4ADE80}
+.task-card{position:absolute;left:50%;top:2.65vw;transform:translateX(-50%);width:21vw;padding:0.72vw 0.9vw;border:0.06vw solid rgba(34,197,94,0.22);border-radius:0.55vw;background:rgba(2,8,16,0.86);z-index:12;animation:taskGlow 5.6s ease-in-out infinite;overflow:hidden}
+.task-card::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(74,222,128,0.18),transparent);transform:translateX(-120%);animation:cardSweep 5.6s ease-in-out infinite}
+.task-label{font-family:'JetBrains Mono',monospace;font-size:0.58vw;color:#315C3C;margin-bottom:0.22vw}
+.task-text{font-size:0.82vw;font-weight:800;color:#E2E8F0}
+.safe-room{position:absolute;left:50%;top:50%;width:17vw;height:15.5vw;transform:translate(-50%,-50%);border:0.06vw solid rgba(34,197,94,0.32);border-radius:0.85vw;background:rgba(2,8,16,0.78);box-shadow:0 0 3vw rgba(34,197,94,0.11);display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:7}
+.safe-room::before,.safe-room::after{content:"";position:absolute;left:50%;top:50%;width:18vw;height:18vw;border:0.06vw solid rgba(34,197,94,0.18);border-radius:50%;transform:translate(-50%,-50%) scale(0.45);opacity:0;animation:ringPulse 5.6s ease-out infinite;pointer-events:none}
+.safe-room::after{border-color:rgba(129,140,248,0.18);animation-delay:0.45s}
+.safe-room-title{position:absolute;top:0.7vw;font-family:'JetBrains Mono',monospace;font-size:0.62vw;color:#315C3C}
+.boss{position:relative;width:6.6vw;height:7.1vw;animation:bossNod 2.4s ease-in-out infinite}
+.boss-chair{position:absolute;left:1vw;right:1vw;bottom:0;width:4.6vw;height:4.1vw;border-radius:0.55vw 0.55vw 0.4vw 0.4vw;background:linear-gradient(180deg,#1E293B,#0F172A);border:0.06vw solid rgba(255,255,255,0.1)}
+.boss-head{position:absolute;left:2.05vw;top:0.45vw;width:2.45vw;height:2.45vw;border-radius:50%;background:#E2E8F0;box-shadow:inset 0 -0.45vw 0 #94A3B8}
+.boss-glasses{position:absolute;left:2.32vw;top:1.28vw;width:1.9vw;height:0.42vw;border-top:0.14vw solid #020810;border-bottom:0.08vw solid #020810}
+.boss-body{position:absolute;left:1.55vw;top:2.75vw;width:3.55vw;height:3vw;border-radius:0.65vw 0.65vw 0.3vw 0.3vw;background:linear-gradient(180deg,#22C55E,#166534)}
+.boss-label{position:absolute;bottom:-1.15vw;left:50%;transform:translateX(-50%);font-weight:800;font-size:0.78vw;color:#4ADE80;white-space:nowrap}
+.boss.has-photo{width:7.5vw;height:8.1vw}
+.boss.has-photo .boss-chair{display:none}
+.boss-avatar{position:absolute;left:50%;top:0.25vw;width:5.45vw;height:5.45vw;transform:translateX(-50%);border-radius:50%;object-fit:cover;border:0.15vw solid rgba(74,222,128,0.92);box-shadow:0 0 1.4vw rgba(74,222,128,0.42),0 0.55vw 1.5vw rgba(0,0,0,0.38)}
+.boss-avatar-ring{position:absolute;left:50%;top:-0.18vw;width:6.25vw;height:6.25vw;transform:translateX(-50%);border-radius:50%;border:0.06vw dashed rgba(74,222,128,0.42);animation:ringSpin 6.8s linear infinite}
+.boss.has-photo .boss-head,.boss.has-photo .boss-glasses,.boss.has-photo .boss-body{display:none}
+.boss.has-photo .boss-label{bottom:0.25vw;font-size:0.82vw}
+.work-zone{position:absolute;width:17vw;padding:0.9vw 1vw;border:0.06vw solid rgba(255,255,255,0.07);border-radius:0.65vw;background:rgba(255,255,255,0.025);z-index:4;overflow:hidden}
+.work-zone::before{content:"";position:absolute;left:-20%;top:0;width:18%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.16),transparent);transform:skewX(-12deg);animation:zoneGlint 5.6s ease-in-out infinite}
+.work-zone.z-a{left:6%;top:25%;border-color:rgba(34,197,94,0.2);background:rgba(34,197,94,0.035)}
+.work-zone.z-b{right:6%;top:25%;border-color:rgba(99,102,241,0.22);background:rgba(99,102,241,0.035)}
+.work-zone.z-c{left:50%;bottom:8.5%;transform:translateX(-50%);border-color:rgba(251,146,60,0.2);background:rgba(251,146,60,0.032)}
+.zone-name{font-size:0.95vw;font-weight:800;color:#E2E8F0;margin-bottom:0.35vw}
+.zone-sub{font-family:'JetBrains Mono',monospace;font-size:0.62vw;color:#315C3C;line-height:1.55}
+.zone-artifact{margin-top:0.55vw;font-family:'JetBrains Mono',monospace;font-size:0.62vw;font-weight:800;color:#FB923C;opacity:0;animation:artifactPop 5.6s ease-in-out infinite}
+.zone-avatar{position:absolute;right:0.8vw;top:0.75vw;width:3.2vw;height:3.2vw;border-radius:50%;object-fit:cover;border:0.1vw solid rgba(255,255,255,0.62);box-shadow:0 0.55vw 1.2vw rgba(0,0,0,0.32),0 0 0.9vw rgba(34,197,94,0.18)}
+.work-zone .zone-name,.work-zone .zone-sub,.work-zone .zone-artifact{position:relative;z-index:2;max-width:11vw}
+.route{position:absolute;border-top:0.08vw dashed rgba(34,197,94,0.26);transform-origin:left center;z-index:2;animation:routePulse 5.6s ease-in-out infinite}
+.route.r-a{left:31%;top:47%;width:22vw;transform:rotate(198deg)}
+.route.r-b{left:52%;top:47%;width:22vw;transform:rotate(-18deg)}
+.route.r-c{left:48%;top:61%;width:14vw;transform:rotate(90deg)}
+.beam{position:absolute;height:0.14vw;border-radius:999vw;transform-origin:left center;z-index:2;opacity:0;background:linear-gradient(90deg,rgba(34,197,94,0),rgba(74,222,128,0.72),rgba(34,197,94,0));filter:drop-shadow(0 0 0.75vw rgba(74,222,128,0.58));animation:beamFire 5.6s ease-in-out infinite}
+.beam.b-a{left:22%;top:39%;width:29vw;transform:rotate(22deg)}
+.beam.b-b{left:50%;top:51%;width:28vw;transform:rotate(-22deg);background:linear-gradient(90deg,rgba(129,140,248,0),rgba(129,140,248,0.72),rgba(129,140,248,0))}
+.beam.b-c{left:50%;top:74%;width:19vh;transform:rotate(-90deg);background:linear-gradient(90deg,rgba(251,146,60,0),rgba(251,146,60,0.72),rgba(251,146,60,0))}
+.info-packet{position:absolute;z-index:9;display:flex;align-items:center;gap:0.38vw;padding:0.34vw 0.56vw;border-radius:999vw;border:0.06vw solid rgba(255,255,255,0.12);background:rgba(2,8,16,0.86);font-family:'JetBrains Mono',monospace;font-size:0.58vw;font-weight:800;box-shadow:0 0 1.1vw rgba(34,197,94,0.18);opacity:0;pointer-events:none}
+.info-packet::before{content:"";width:0.42vw;height:0.42vw;border-radius:50%;background:currentColor;box-shadow:0 0 0.65vw currentColor}
+.info-packet.pa{left:20%;top:39%;color:#4ADE80;animation:packetA 5.6s ease-in-out infinite}
+.info-packet.pb{left:75%;top:39%;color:#818CF8;animation:packetB 5.6s ease-in-out infinite}
+.info-packet.pc{left:50%;top:76%;color:#FB923C;animation:packetC 5.6s ease-in-out infinite}
+.boss-quote{position:absolute;left:50%;top:30%;transform:translateX(-50%);width:25vw;padding:0.85vw 1.05vw;border:0.06vw solid rgba(34,197,94,0.28);border-radius:0.65vw;background:rgba(2,8,16,0.92);box-shadow:0 0 1.8vw rgba(34,197,94,0.14);animation:quotePop 5.6s ease-in-out infinite;z-index:10;text-align:center}
+.boss-quote::before{content:"";position:absolute;left:50%;bottom:-0.5vw;width:0.9vw;height:0.9vw;transform:translateX(-50%) rotate(45deg);background:rgba(2,8,16,0.92);border-right:0.06vw solid rgba(34,197,94,0.28);border-bottom:0.06vw solid rgba(34,197,94,0.28)}
+.quote-kicker{font-family:'JetBrains Mono',monospace;font-size:0.56vw;color:#315C3C;margin-bottom:0.3vw}
+.quote-text{font-size:1.34vw;font-weight:900;color:#F8FAFC;letter-spacing:0}
+.quote-text span{color:#4ADE80}
+.caption-pill{position:absolute;right:3vw;top:2.4vw;font-family:'JetBrains Mono',monospace;font-size:0.62vw;color:#22C55E;background:rgba(34,197,94,0.08);border:0.06vw solid rgba(34,197,94,0.18);border-radius:999vw;padding:0.35vw 0.65vw;z-index:12}
+@keyframes bossNod{0%,100%{transform:translateY(0)}50%{transform:translateY(-0.18vw)}}
+@keyframes ringSpin{to{transform:translateX(-50%) rotate(360deg)}}
+@keyframes taskGlow{0%,100%{box-shadow:0 0 0 rgba(34,197,94,0)}12%,28%{box-shadow:0 0 1.2vw rgba(34,197,94,0.16)}}
+@keyframes sceneScan{0%,18%{transform:translateX(-42%)}42%,100%{transform:translateX(42%)}}
+@keyframes sparkFloat{0%,100%{transform:translateY(0) scale(1);opacity:0.18}50%{transform:translateY(-1.4vw) scale(1.8);opacity:0.58}}
+@keyframes cardSweep{0%,10%{transform:translateX(-120%)}28%,100%{transform:translateX(120%)}}
+@keyframes ringPulse{0%,12%{opacity:0;transform:translate(-50%,-50%) scale(0.35)}24%{opacity:0.62}52%,100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+@keyframes zoneGlint{0%,36%{left:-25%}52%,100%{left:110%}}
+@keyframes routePulse{0%,12%,100%{opacity:0.32}22%,70%{opacity:1}}
+@keyframes beamFire{0%,14%{opacity:0;clip-path:inset(0 100% 0 0)}23%{opacity:0.85;clip-path:inset(0 0 0 0)}42%,100%{opacity:0;clip-path:inset(0 0 0 100%)}}
+@keyframes artifactPop{0%,36%{opacity:0;transform:translateY(0.35vw)}45%,72%{opacity:1;transform:translateY(0)}88%,100%{opacity:0}}
+@keyframes packetA{0%,39%{opacity:0;transform:translate(0,0) scale(0.72)}46%{opacity:1;transform:translate(0,0) scale(1)}72%{opacity:1;transform:translate(27vw,9.5vh) scale(1)}80%,100%{opacity:0;transform:translate(27vw,9.5vh) scale(0.72)}}
+@keyframes packetB{0%,41%{opacity:0;transform:translate(0,0) scale(0.72)}48%{opacity:1;transform:translate(0,0) scale(1)}74%{opacity:1;transform:translate(-25vw,9.5vh) scale(1)}82%,100%{opacity:0;transform:translate(-25vw,9.5vh) scale(0.72)}}
+@keyframes packetC{0%,43%{opacity:0;transform:translate(-50%,0) scale(0.72)}50%{opacity:1;transform:translate(-50%,0) scale(1)}76%{opacity:1;transform:translate(-50%,-25vh) scale(1)}84%,100%{opacity:0;transform:translate(-50%,-25vh) scale(0.72)}}
+@keyframes quotePop{0%,58%{opacity:0;transform:translateX(-50%) translateY(0.7vw) scale(0.94)}66%{opacity:1;transform:translateX(-50%) translateY(0) scale(1.04)}72%,100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+
 @media (orientation: portrait){
   .two-col,.two-col.wide-r,.two-col.wide-l,.cover-wrap{grid-template-columns:1fr}
+  .intro-stage{padding:6vw 5vw}
+  .story-board{height:72vh}
+  .scene-heading{font-size:2.8vw}
+  .work-zone{width:30vw}
+  .safe-room{width:28vw;height:24vw}
+  .boss-quote{width:44vw}
   .cover-right{display:none}
   .h-main{font-size:7vw}
   .desc,.info-name,.frow-name{font-size:2.4vw}
@@ -169,13 +251,73 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 <body>
 <div class="deck">
 
-<div class="slide active" id="s0">
+<div class="slide active" id="s_intro">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-i"></div></div>
+  <div class="intro-stage">
+    <div class="story-board">
+      <div class="scene-scan"></div>
+      <div class="spark s1"></div><div class="spark s2"></div><div class="spark s3"></div><div class="spark s4"></div>
+      <div class="spark s5"></div><div class="spark s6"></div><div class="spark s7"></div><div class="spark s8"></div>
+      <div class="scene-title">
+        <div class="scene-kicker">OPENING STORY</div>
+        <div class="scene-heading">大哥不下场，<span>马仔带战利品回来</span></div>
+      </div>
+      <div class="task-card">
+        <div class="task-label">任务进来</div>
+        <div class="task-text">压场摆平 · 联络协调 · 暗线处理</div>
+      </div>
+      <div class="caption-pill">人不动 → 各管一摊 → 结果回传</div>
+      <div class="route r-a"></div>
+      <div class="route r-b"></div>
+      <div class="route r-c"></div>
+      <div class="beam b-a"></div>
+      <div class="beam b-b"></div>
+      <div class="beam b-c"></div>
+      <div class="info-packet pa">摆平</div>
+      <div class="info-packet pb">协调</div>
+      <div class="info-packet pc">暗线</div>
+      <div class="work-zone z-a">
+        <img class="zone-avatar" src="assets/kuangbiao/tanglong_avatar.jpg" alt="唐小龙头像">
+        <div class="zone-name">唐小龙 · 压场</div>
+        <div class="zone-sub">旧厂街地头蛇出身, 后来成高启强手里的一把刀</div>
+        <div class="zone-artifact">棘手事摆平</div>
+      </div>
+      <div class="work-zone z-b">
+        <img class="zone-avatar" src="assets/kuangbiao/tanghu_avatar.jpg" alt="唐小虎头像">
+        <div class="zone-name">唐小虎 · 联络</div>
+        <div class="zone-sub">贴身跑腿、传话协调, 后期做到强盛集团二把手</div>
+        <div class="zone-artifact">关系线回话</div>
+      </div>
+      <div class="work-zone z-c">
+        <img class="zone-avatar" src="assets/kuangbiao/laomo_avatar.jpg" alt="老默头像">
+        <div class="zone-name">老默 · 暗线</div>
+        <div class="zone-sub">鱼摊作外壳, 专走不进台面的高风险脏活</div>
+        <div class="zone-artifact">暗线结果</div>
+      </div>
+      <div class="safe-room">
+        <div class="safe-room-title">主线房间</div>
+        <div class="boss has-photo">
+          <div class="boss-avatar-ring"></div>
+          <img class="boss-avatar" src="assets/kuangbiao/gao_avatar.jpg" alt="高启强">
+          <div class="boss-label">大哥</div>
+        </div>
+      </div>
+      <div class="boss-quote">
+        <div class="quote-kicker">消息汇总完毕</div>
+        <div class="quote-text">风浪越大，<span>鱼越贵</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><div>先用一个故事理解子代理, 下一页进入工程实现</div><div><span>9 SLIDES</span></div></div>
+</div>
+
+<div class="slide" id="s0">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
   <div class="cover-wrap">
     <div class="cover-left">
       <div class="chip"><div class="chip-dot"></div>BUILD AGENT · EP 05 · ENGINEERING SUBAGENTS</div>
       <div class="cover-title">Agent</div>
-      <div class="cover-green">子代理工程化实现</div>
+      <div class="cover-green">子代理实现</div>
       <div class="desc" style="max-width:39vw;margin-bottom:1vw">这一期不只讲 step08 的演示代码，而是看主项目里真正落地的子代理系统：职位预设、工具白名单、独立 runner、并发 dispatch，以及主 history 如何只保留摘要。</div>
       <div class="code-card green" style="margin-bottom:1vw;max-width:39vw">
         <div class="c-head"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div><div class="c-label g">agent/tools/dispatch.py · execute()</div></div>
@@ -204,7 +346,7 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
       <div class="info-row hi2"><div class="info-icon">05</div><div><div class="info-name">Guardrails</div><div class="info-sub">无递归 · 无私改 todo · 结果压缩</div></div></div>
     </div>
   </div>
-  <div class="footer"><div>agent/runner.py · agent/tools/dispatch.py · agent/subagents/registry.py</div><div><span>8 SLIDES</span></div></div>
+  <div class="footer"><div>agent/runner.py · agent/tools/dispatch.py · agent/subagents/registry.py</div><div><span>9 SLIDES</span></div></div>
 </div>
 
 <div class="slide" id="s2">
@@ -428,7 +570,7 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 <div class="nav">
   <div class="nav-btn" id="prev">&#8592;</div>
   <div class="nav-dots" id="dots"></div>
-  <div class="nav-count" id="count">1 / 8</div>
+  <div class="nav-count" id="count">1 / 9</div>
   <div class="nav-btn" id="next">&#8594;</div>
 </div>
 
