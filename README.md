@@ -3,7 +3,7 @@
 用 Python 从零构建 AI Agent。包含两部分：
 
 1. **`agent/`** — 一个完整可用的多轮对话 Agent，带三层记忆系统、自动压缩、可插拔技能、任务规划与子代理派遣。
-2. **[build-agent-example/](build-agent-example/)** — 8 个渐进式教学示例（step01 → step08），从单次对话到 Tool Use + Skills + Todolist + Subagent。每个示例都配有同名讲解文档。
+2. **[build-agent-example/](build-agent-example/)** — 9 个渐进式教学示例（step01 → step09），从单次对话到 Tool Use + Skills + Todolist + Subagent + Agent Team。每个示例都配有同名讲解文档。
 
 配套讲解 PPT 见 [ppt/](ppt/)。
 
@@ -154,6 +154,7 @@ assistant tool_use:
 | 6 | [step06_skills.py](build-agent-example/code/step06_skills.py) | [doc](build-agent-example/doc/step06_skills.md) | 多工具 + Skills | 动态加载技能包 |
 | 7 | [step07_plan_todolist.py](build-agent-example/code/step07_plan_todolist.py) | [doc](build-agent-example/doc/step07_plan_todolist.md) | 任务规划 | `update_todos` todolist |
 | 8 | [step08_subagent.py](build-agent-example/code/step08_subagent.py) | [doc](build-agent-example/doc/step08_subagent.md) | 子代理派遣 | `dispatch_subagent` 独立上下文 + 多身份 + 并发派遣 |
+| 9 | [step09_agent_team.py](build-agent-example/code/step09_agent_team.py) | [doc](build-agent-example/doc/step09_agent_team.md) | Agent Team | 持久队友 + 文件 inbox + team 状态 |
 
 ---
 
@@ -188,3 +189,4 @@ assistant tool_use:
 - [第三期：记忆系统](ppt/第三期:记忆系统.html)
 - [第四期：Agent 任务规划](ppt/第四期:agent任务规划.html)
 - [第五期：Agent 子代理的实现](ppt/第五期:agent子代理的实现.html)
+- [第六期：Agent Team 团队协作](ppt/第六期-agent团队协作.html)

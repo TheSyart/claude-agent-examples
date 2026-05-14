@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>第六期:Agent Team 团队协作</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:'IBM Plex Sans','PingFang SC',sans-serif;color:#E2E8F0}
+.deck{position:relative;width:100%;height:100%;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.slide.active{opacity:1;pointer-events:all}
+
+.nav{position:fixed;bottom:2vh;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:1.2vw;background:rgba(2,8,16,.85);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px);padding:.6vh 1.4vw;border-radius:999px;z-index:1000}
+.nav-btn{width:2.4vw;height:2.4vw;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9vw;transition:all .2s;user-select:none}
+.nav-btn:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#22C55E}
+.nav-dots{display:flex;gap:.5vw;align-items:center}
+.nav-dot{width:.5vw;height:.5vw;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;transition:all .2s}
+.nav-dot.on{background:#22C55E;box-shadow:0 0 6px #22C55E;width:1.4vw;border-radius:3px}
+.nav-count{font-family:'JetBrains Mono',monospace;font-size:.7vw;color:#334155;min-width:3vw;text-align:center}
+
+.bg{position:absolute;inset:0;pointer-events:none}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(34,197,94,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.03) 1px,transparent 1px);background-size:5vw 5vw}
+.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#4ADE80 40%,#6366F1 70%,#8B5CF6);z-index:50}
+.glow-l{position:absolute;width:55vw;height:100%;background:radial-gradient(ellipse at left center,rgba(34,197,94,.08) 0%,transparent 60%)}
+.glow-r{position:absolute;width:35vw;height:65%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 65%)}
+.glow-c{position:absolute;width:50vw;height:80vh;top:10%;left:25%;background:radial-gradient(ellipse,rgba(34,197,94,.07) 0%,transparent 65%)}
+.glow-o{position:absolute;width:34vw;height:62vh;right:6%;top:18%;background:radial-gradient(ellipse,rgba(251,146,60,.07) 0%,transparent 68%)}
+
+.page-id{position:absolute;top:1.8vw;left:3vw;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#1E3A2A;z-index:20}
+.page-id span{color:#22C55E}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.72vw;letter-spacing:0;color:#22C55E;margin-bottom:.8vw}
+.h-main{font-size:3.35vw;font-weight:900;letter-spacing:0;line-height:1.05;color:#F8FAFC;margin-bottom:.6vw}
+.h-main em{font-style:normal;background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.desc{font-size:.92vw;color:#64748B;line-height:1.7;margin-bottom:1.5vw;text-wrap:pretty}
+.file{font-family:'JetBrains Mono',monospace;color:#FB923C}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.chip{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:0;color:#22C55E;margin-bottom:1.4vw}
+.chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E;animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
+
+.badge-g,.badge-i,.badge-o,.badge-dim{font-family:'JetBrains Mono',monospace;font-size:.62vw;font-weight:700;padding:.2vw .5vw;border-radius:.3vw;letter-spacing:0;display:inline-block}
+.badge-g{background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2)}
+.badge-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
+.badge-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.25)}
+.badge-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.06)}
+
+.two-col{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1fr;padding:4vw 4vw 3vw;gap:3vw}
+.two-col.wide-r{grid-template-columns:.86fr 1.14fr}
+.two-col.wide-l{grid-template-columns:1.12fr .88fr}
+.col{display:flex;flex-direction:column;justify-content:center}
+.col.gap{gap:.8vw}
+
+.info-row{display:flex;align-items:flex-start;gap:1vw;padding:.8vw 1vw;border:1px solid rgba(255,255,255,.05);border-radius:.5vw;background:rgba(255,255,255,.015);margin-bottom:.5vw}
+.info-row.hi{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
+.info-row.hi2{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
+.info-row.hi3{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.03)}
+.info-icon{width:2vw;height:2vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;border:1px solid rgba(255,255,255,.08);color:#475569;background:rgba(255,255,255,.04)}
+.info-row.hi .info-icon{background:rgba(34,197,94,.12);color:#22C55E;border-color:rgba(34,197,94,.3);box-shadow:0 0 .8vw rgba(34,197,94,.12)}
+.info-row.hi2 .info-icon{background:rgba(99,102,241,.12);color:#818CF8;border-color:rgba(99,102,241,.3)}
+.info-row.hi3 .info-icon{background:rgba(251,146,60,.1);color:#FB923C;border-color:rgba(251,146,60,.25)}
+.info-name{font-size:.9vw;font-weight:700;color:#94A3B8;margin-bottom:.15vw}
+.info-row.hi .info-name,.info-row.hi2 .info-name,.info-row.hi3 .info-name{color:#E2E8F0}
+.info-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#1E3A2A;line-height:1.55}
+.info-row.hi .info-sub{color:#1E5C2A}.info-row.hi2 .info-sub{color:#3730A3}.info-row.hi3 .info-sub{color:#7C3A11}
+
+.code-card{background:#020810;border:1px solid rgba(255,255,255,.06);border-radius:.7vw;overflow:hidden}
+.code-card.green{border-color:rgba(34,197,94,.2)}.code-card.ind{border-color:rgba(99,102,241,.22)}.code-card.orange{border-color:rgba(251,146,60,.22)}
+.c-head{padding:.6vw 1vw;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between}
+.c-label{font-family:'JetBrains Mono',monospace;font-size:.65vw;color:#334155}.c-label.g{color:#22C55E}.c-label.i{color:#818CF8}.c-label.o{color:#FB923C}
+.dots{display:flex;gap:.4vw}.dot{width:.65vw;height:.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
+.c-body{padding:.9vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.78}
+.ln{color:#1E3A2A;margin-right:.8vw;font-size:.7vw;user-select:none}
+.kw{color:#6366F1}.fn{color:#22C55E}.st{color:#FB923C}.cm{color:#1E3A2A;font-style:italic}.va{color:#E2E8F0}.prop{color:#93C5FD}.num{color:#FBBF24}
+.hl{background:rgba(34,197,94,.06);border-left:2px solid #22C55E;display:block;padding-left:.4vw;margin-left:-.4vw;border-radius:0 3px 3px 0}
+
+.flow-col{display:flex;flex-direction:column}
+.frow{display:flex;align-items:stretch;gap:.8vw}
+.frow-left{display:flex;flex-direction:column;align-items:center;width:2.2vw;flex-shrink:0}
+.frow-icon{width:2.2vw;height:2.2vw;border-radius:.4vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;flex-shrink:0}
+.frow-line{flex:1;width:1px;margin:.2vw 0}
+.fi-g{background:rgba(34,197,94,.12);color:#22C55E;border:1px solid rgba(34,197,94,.25)}
+.fi-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
+.fi-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.2)}
+.fi-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.08)}
+.fl-g{background:rgba(34,197,94,.2)}.fl-i{background:rgba(99,102,241,.2)}.fl-dim{background:rgba(255,255,255,.06)}
+.frow-body{flex:1;padding:.6vw 0;display:flex;flex-direction:column;justify-content:center}
+.frow-name{font-size:.88vw;font-weight:700;color:#E2E8F0;margin-bottom:.15vw}.frow-name.dim{color:#64748B}
+.frow-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#22613A;line-height:1.55}.frow-sub.dim{color:#1A2E1E}
+
+.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:1vw;width:100%}
+.mod-card{border-radius:.6vw;padding:1.1vw 1.3vw;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015)}
+.mod-card.g{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
+.mod-card.i{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
+.mod-card.o{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.04)}
+.mod-card.s{border-color:rgba(34,211,238,.2);background:rgba(34,211,238,.04)}
+.mod-file{font-family:'JetBrains Mono',monospace;font-size:.6vw;letter-spacing:0;color:#334155;margin-bottom:.35vw;text-transform:uppercase}
+.mod-name{font-size:.95vw;font-weight:700;color:#E2E8F0;margin-bottom:.55vw}
+.mod-card.g .mod-name{color:#4ADE80}.mod-card.i .mod-name{color:#818CF8}.mod-card.o .mod-name{color:#FB923C}.mod-card.s .mod-name{color:#22D3EE}
+.mod-methods{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#334155;line-height:1.9}.mod-methods span{color:#22C55E}.mod-card.i .mod-methods span{color:#818CF8}.mod-card.o .mod-methods span{color:#FB923C}.mod-card.s .mod-methods span{color:#22D3EE}
+
+.lane{display:grid;grid-template-columns:1fr .34fr 1fr;gap:.8vw;align-items:center}
+.lane-box{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015);border-radius:.6vw;padding:1vw}
+.lane-box.g{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
+.lane-box.i{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
+.lane-box.o{border-color:rgba(251,146,60,.22);background:rgba(251,146,60,.04)}
+.lane-title{font-size:.95vw;font-weight:800;color:#E2E8F0;margin-bottom:.45vw}
+.lane-sub{font-family:'JetBrains Mono',monospace;font-size:.66vw;color:#334155;line-height:1.7}
+.lane-mid{display:flex;justify-content:center;align-items:center;font-family:'JetBrains Mono',monospace;color:#1E3A2A;font-size:.85vw}
+
+.team-map{position:relative;height:28vw;border:1px solid rgba(34,197,94,.16);border-radius:.9vw;background:radial-gradient(circle at 50% 45%,rgba(34,197,94,.1),transparent 30%),linear-gradient(180deg,rgba(2,8,16,.92),rgba(3,12,22,.78));overflow:hidden}
+.map-title{position:absolute;left:1vw;top:.85vw;font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#4ADE80;letter-spacing:0;font-weight:700}
+.legend{position:absolute;right:.9vw;top:.75vw;display:flex;gap:.45vw;z-index:8;padding:.35vw .45vw;border:1px solid rgba(255,255,255,.06);border-radius:.45vw;background:rgba(2,8,16,.72);backdrop-filter:blur(8px)}
+.legend-item{display:flex;align-items:center;gap:.28vw;font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#64748B;white-space:nowrap}
+.legend-swatch{width:.55vw;height:.55vw;border-radius:.14vw;border:1px solid rgba(255,255,255,.1)}
+.legend-swatch.g{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.45)}
+.legend-swatch.i{background:rgba(99,102,241,.22);border-color:rgba(99,102,241,.45)}
+.legend-swatch.o{background:rgba(251,146,60,.2);border-color:rgba(251,146,60,.42)}
+.legend-swatch.s{background:rgba(34,211,238,.18);border-color:rgba(34,211,238,.36)}
+.node{position:absolute;width:8.2vw;padding:.75vw .8vw;border-radius:.55vw;border:1px solid rgba(255,255,255,.08);background:rgba(2,8,16,.88);box-shadow:0 0 2vw rgba(0,0,0,.18);z-index:5}
+.node.lead{left:50%;top:34%;transform:translate(-50%,-50%);border-color:rgba(34,197,94,.38);background:rgba(34,197,94,.08);box-shadow:0 0 2.4vw rgba(34,197,94,.08)}
+.node.a{left:8%;top:18%;border-color:rgba(99,102,241,.3);background:rgba(99,102,241,.06)}
+.node.b{right:8%;top:18%;border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05)}
+.node.c{left:13%;bottom:12%;border-color:rgba(34,211,238,.24);background:rgba(34,211,238,.04)}
+.node.d{right:13%;bottom:12%;border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.04)}
+.node-role{font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#475569;margin-bottom:.2vw}
+.node-name{font-size:.9vw;font-weight:900;color:#F8FAFC}.node.lead .node-name{color:#4ADE80}
+.node-state{font-family:'JetBrains Mono',monospace;font-size:.64vw;color:#1E5C2A;margin-top:.25vw}
+.node.a .node-state{color:#818CF8}.node.b .node-state{color:#FB923C}.node.c .node-state{color:#22D3EE}.node.d .node-state{color:#4ADE80}
+.wire{display:none}
+.topology-svg{display:none}
+.topology-svg path{fill:none;stroke:rgba(34,197,94,.34);stroke-width:.28;stroke-linecap:round;stroke-linejoin:round}
+.topology-svg .soft{stroke:rgba(34,197,94,.24)}
+.w1{left:26%;top:30%;width:18vw;transform:rotate(12deg)}.w2{left:56%;top:30%;width:17vw;transform:rotate(-12deg)}
+.w3{left:30%;top:61%;width:17vw;transform:rotate(-22deg)}.w4{left:55%;top:61%;width:16vw;transform:rotate(22deg)}
+.inbox-core{position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);width:10.6vw;padding:.7vw .85vw;border:1px solid rgba(251,146,60,.28);border-radius:.55vw;background:rgba(251,146,60,.06);z-index:6;text-align:center;box-shadow:0 0 2vw rgba(251,146,60,.05)}
+.inbox-title{font-size:.86vw;font-weight:800;color:#FB923C;margin-bottom:.16vw}
+.inbox-sub{font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#7C3A11;line-height:1.45}
+.msg-pill{position:absolute;z-index:7;padding:.24vw .42vw;border-radius:.28vw;border:1px solid rgba(34,197,94,.2);background:rgba(2,8,16,.88);font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#4ADE80;white-space:nowrap}
+.msg-pill.p1{left:34%;top:31%}.msg-pill.p2{right:34%;top:31%}.msg-pill.p3{left:35%;bottom:30%}.msg-pill.p4{right:34%;bottom:30%}
+
+.terminal{background:#020810;border:1px solid rgba(34,197,94,.18);border-radius:.7vw;overflow:hidden;box-shadow:0 0 3vw rgba(34,197,94,.06)}
+.term-bar{display:flex;align-items:center;gap:.5vw;padding:.7vw 1vw;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05)}
+.term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#334155}
+.term-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.95;color:#64748B}
+.prompt{color:#22C55E}.out{color:#94A3B8}.warn{color:#FB923C}.dim{color:#334155}
+
+.cover-wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 26vw}
+.cover-left{display:flex;flex-direction:column;justify-content:center;padding:3.5vw 3vw 3.5vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
+.cover-title{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;color:#F8FAFC;margin-bottom:.4vw}
+.cover-green{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.35vw}
+.cover-right{display:flex;flex-direction:column;justify-content:center;padding:3vw 2.5vw}
+.footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.7vw;color:#1E3A2A;z-index:20}
+.footer span{color:#166534}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<div class="slide active" id="s0">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="cover-wrap">
+    <div class="cover-left">
+      <div class="chip"><div class="chip-dot"></div>PERSONAL AGENT · TEAM WORKFLOW · CLAUDE API</div>
+      <div class="cover-title">Agent Team</div>
+      <div class="cover-green">团队协作</div>
+      <div class="desc" style="max-width:39vw">从“派一个子代理办完即散”，进化到“组一支固定班底”：有名字、有角色、有状态、有 inbox，可以持续协作。</div>
+      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
+        <span class="badge-g">Persistent Teammates</span>
+        <span class="badge-i">JSONL Inbox</span>
+        <span class="badge-o">Lead Dispatch</span>
+        <span class="badge-dim">step09_agent_team.py</span>
+      </div>
+    </div>
+    <div class="cover-right">
+      <div class="info-row hi"><div class="info-icon">08</div><div><div class="info-name">Subagent</div><div class="info-sub">spawn → work → summary → destroyed</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">09</div><div><div class="info-name">Agent Team</div><div class="info-sub">spawn → work → idle → work → shutdown</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">IO</div><div><div class="info-name">File Mailboxes</div><div class="info-sub">.team/inbox/*.jsonl</div></div></div>
+    </div>
+  </div>
+  <div class="footer"><span>第六期</span><span>BUILD AGENT EXAMPLE · 2026</span></div>
+</div>
+
+<div class="slide" id="s1">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
+  <div class="page-id">// problem &nbsp;·&nbsp; <span>一次性子代理不够了</span></div>
+  <div class="two-col wide-l">
+    <div class="col">
+      <div class="tag">PROBLEM 01 · BEYOND SUBAGENT</div>
+      <div class="h-main">有些任务不是<br><em>办完就散</em></div>
+      <div class="desc">第五期的子代理擅长隔离上下文，但它是一次性劳动力。到了长期项目，我们需要固定角色、持续沟通和可观察的团队状态。</div>
+      <div class="info-row hi"><div class="info-icon">A</div><div><div class="info-name">长期项目</div><div class="info-sub">coder / reviewer / researcher 需要反复接活</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">B</div><div><div class="info-name">异步协作</div><div class="info-sub">队友之间不只回主线总结，还要互相传话</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">C</div><div><div class="info-name">状态可见</div><div class="info-sub">lead 能看到谁 working，谁 idle，谁 shutdown</div></div></div>
+    </div>
+    <div class="col">
+      <div class="terminal">
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">mental_model.txt</div></div>
+        <div class="term-body">
+          <span class="prompt">subagent</span> = 派一次差<br>
+          <span class="dim">  创建独立上下文</span><br>
+          <span class="dim">  执行工具细节</span><br>
+          <span class="dim">  回传压缩总结</span><br>
+          <span class="warn">  结束后销毁</span><br><br>
+          <span class="prompt">agent team</span> = 养一支班底<br>
+          <span class="dim">  固定名字 / 角色 / 状态</span><br>
+          <span class="dim">  通过 inbox 收发消息</span><br>
+          <span class="dim">  完成后回到 idle</span><br>
+          <span class="out">  等下一件差事</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s2">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// compare &nbsp;·&nbsp; <span>两层能力，不冲突</span></div>
+  <div class="two-col">
+    <div class="col">
+      <div class="tag">COMPARE 02 · DISPATCH VS TEAM</div>
+      <div class="h-main"><em>Subagent</em><br>临时派工</div>
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">01</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">spawn</div><div class="frow-sub">按身份启动一个独立 message loop</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">02</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">execute</div><div class="frow-sub">内部跑工具、试错、阅读文件</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">03</div></div><div class="frow-body"><div class="frow-name">return summary</div><div class="frow-sub">只给主 history 回填一段总结</div></div></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="tag">COMPARE 02 · PERSISTENT TEAM</div>
+      <div class="h-main"><em>Agent Team</em><br>固定组织</div>
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">01</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">spawn teammate</div><div class="frow-sub">写入 config，启动队友线程</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">02</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">work then idle</div><div class="frow-sub">完成当前任务后继续等待 inbox</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">03</div></div><div class="frow-body"><div class="frow-name">communicate</div><div class="frow-sub">lead 与队友、队友与队友异步传消息</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s3">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
+  <div class="page-id">// 架构 &nbsp;·&nbsp; <span>总控 + 队友 + 收件箱</span></div>
+  <div class="two-col wide-r">
+    <div class="col">
+      <div class="tag">架构 03 · 团队拓扑</div>
+      <div class="h-main">团队不是一堆调用<br>而是<em>组织结构</em></div>
+      <div class="desc">总控负责任务拆解、召入队友、分派消息、读取回禀。每个队友在独立线程里运行自己的循环，办完后回到空闲状态。</div>
+      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
+        <span class="badge-g">总控</span>
+        <span class="badge-i">队友循环</span>
+        <span class="badge-o">收件箱</span>
+        <span class="badge-dim">团队配置</span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="team-map">
+        <div class="map-title">团队拓扑 · 文件收件箱通信</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-swatch g"></div>总控</div>
+          <div class="legend-item"><div class="legend-swatch i"></div>队友</div>
+          <div class="legend-item"><div class="legend-swatch o"></div>收件箱</div>
+          <div class="legend-item"><div class="legend-swatch s"></div>消息</div>
+        </div>
+        <svg class="topology-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="arrow-g" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="rgba(34,197,94,.48)"></path>
+            </marker>
+          </defs>
+          <path d="M42 36 L34 36 L34 28 L25 28" marker-end="url(#arrow-g)"></path>
+          <path d="M58 36 L66 36 L66 28 L75 28" marker-end="url(#arrow-g)"></path>
+          <path class="soft" d="M43 70 L34 70 L34 75 L30 75" marker-end="url(#arrow-g)"></path>
+          <path class="soft" d="M57 70 L66 70 L66 75 L70 75" marker-end="url(#arrow-g)"></path>
+        </svg>
+        <div class="wire w1"></div><div class="wire w2"></div><div class="wire w3"></div><div class="wire w4"></div>
+        <div class="msg-pill p1">← 派活</div>
+        <div class="msg-pill p2">请求审查 →</div>
+        <div class="msg-pill p3">← 资料回传</div>
+        <div class="msg-pill p4">验收报告 →</div>
+        <div class="node lead"><div class="node-role">团队总控</div><div class="node-name">总管</div><div class="node-state">分派 / 读信</div></div>
+        <div class="inbox-core"><div class="inbox-title">消息总线</div><div class="inbox-sub">.team/inbox/*.jsonl<br>追加 → 取空</div></div>
+        <div class="node a"><div class="node-role">代码队友</div><div class="node-name">阿丽</div><div class="node-state">工作中</div></div>
+        <div class="node b"><div class="node-role">审查队友</div><div class="node-name">小鲍</div><div class="node-state">空闲</div></div>
+        <div class="node c"><div class="node-role">资料队友</div><div class="node-name">小陈</div><div class="node-state">空闲</div></div>
+        <div class="node d"><div class="node-role">验收队友</div><div class="node-name">典簿</div><div class="node-state">等待</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s4">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// message bus &nbsp;·&nbsp; <span>文件就是邮箱</span></div>
+  <div class="two-col wide-l">
+    <div class="col">
+      <div class="tag">BUILD 04 · MESSAGE BUS</div>
+      <div class="h-main">每个队友<br>一个<em>JSONL inbox</em></div>
+      <div class="desc">教学版不用数据库，也不用消息队列。发送消息就是 append 一行 JSON；读取消息就是读完后清空文件。</div>
+      <div class="code-card orange">
+        <div class="c-head"><div class="c-label o">.team layout</div><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
+        <div class="c-body">
+          .team/<br>
+          ├── config.json<br>
+          └── inbox/<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;├── lead.jsonl<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;├── alice.jsonl<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;└── bob.jsonl
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="code-card green">
+        <div class="c-head"><div class="c-label g">MessageBus</div><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
+        <div class="c-body">
+          <span class="ln">01</span><span class="kw">class</span> <span class="fn">MessageBus</span>:<br>
+          <span class="ln">02</span>&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">send</span>(sender, to, content):<br>
+          <span class="ln">03</span>&nbsp;&nbsp;&nbsp;&nbsp;msg = {<span class="st">"type"</span>, <span class="st">"from"</span>, <span class="st">"content"</span>, <span class="st">"timestamp"</span>}<br>
+          <span class="ln">04</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">open(<span class="st">f"{to}.jsonl"</span>, <span class="st">"a"</span>).write(json.dumps(msg))</span><br>
+          <span class="ln">05</span><br>
+          <span class="ln">06</span>&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">read_inbox</span>(name):<br>
+          <span class="ln">07</span>&nbsp;&nbsp;&nbsp;&nbsp;messages = parse_all_lines(name)<br>
+          <span class="ln">08</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="hl">write_text(<span class="st">""</span>)  <span class="cm"># drain</span></span><br>
+          <span class="ln">09</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> messages
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s5">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
+  <div class="page-id">// manager &nbsp;·&nbsp; <span>团队配置与状态机</span></div>
+  <div class="two-col">
+    <div class="col">
+      <div class="tag">BUILD 05 · TEAMMATE MANAGER</div>
+      <div class="h-main">固定队友需要<br><em>身份和状态</em></div>
+      <div class="desc">`config.json` 是团队组织结构。它让 agent team 不只是几次函数调用，而是一个可观察、可恢复、可继续分派的班底。</div>
+      <div class="info-row hi"><div class="info-icon">N</div><div><div class="info-name">name</div><div class="info-sub">alice / bob / reviewer</div></div></div>
+      <div class="info-row hi2"><div class="info-icon">R</div><div><div class="info-name">role</div><div class="info-sub">coder / reviewer / researcher</div></div></div>
+      <div class="info-row hi3"><div class="info-icon">S</div><div><div class="info-name">status</div><div class="info-sub">working / idle / shutdown</div></div></div>
+    </div>
+    <div class="col">
+      <div class="code-card ind">
+        <div class="c-head"><div class="c-label i">.team/config.json</div><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
+        <div class="c-body">
+          {<br>
+          &nbsp;&nbsp;<span class="prop">"team_name"</span>: <span class="st">"default"</span>,<br>
+          &nbsp;&nbsp;<span class="prop">"members"</span>: [<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">"name"</span>: <span class="st">"alice"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">"role"</span>: <span class="st">"coder"</span>,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">"status"</span>: <span class="st">"idle"</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;]<br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s6">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
+  <div class="page-id">// teammate loop &nbsp;·&nbsp; <span>工作、空闲、再工作</span></div>
+  <div class="two-col wide-r">
+    <div class="col">
+      <div class="tag">BUILD 06 · PERSISTENT LOOP</div>
+      <div class="h-main">队友线程<br>不是一次性工具</div>
+      <div class="desc">teammate 有自己的 messages、system prompt 和工具列表。它处理完当前任务后不销毁，而是回到 idle，继续轮询自己的 inbox。</div>
+    </div>
+    <div class="col">
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">01</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">spawn_teammate</div><div class="frow-sub">创建线程，初始化独立 messages</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">02</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">read inbox</div><div class="frow-sub">把 JSON 消息追加进 teammate 上下文</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">03</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">tool loop</div><div class="frow-sub">调用基础工具和通信工具，完成当前差事</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">04</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">send result</div><div class="frow-sub">向 lead 回禀，然后 status → idle</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">∞</div></div><div class="frow-body"><div class="frow-name dim">wait next message</div><div class="frow-sub dim">下一封 inbox 到来后继续工作</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s7">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// lead tools &nbsp;·&nbsp; <span>主 agent 的团队接口</span></div>
+  <div class="two-col wide-l">
+    <div class="col">
+      <div class="tag">API 07 · LEAD TOOL SURFACE</div>
+      <div class="h-main">Lead 多了五个<br><em>团队工具</em></div>
+      <div class="desc">这些工具把“团队协作”暴露给模型：先召人，再看状态，之后通过 inbox 分派和收回结果。</div>
+      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
+        <span class="badge-g">spawn</span><span class="badge-i">list</span><span class="badge-o">send</span><span class="badge-g">read</span><span class="badge-dim">broadcast</span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="mod-grid">
+        <div class="mod-card g"><div class="mod-file">team</div><div class="mod-name">spawn_teammate</div><div class="mod-methods"><span>name</span> + <span>role</span> + <span>prompt</span><br>启动固定队友线程</div></div>
+        <div class="mod-card i"><div class="mod-file">team</div><div class="mod-name">list_teammates</div><div class="mod-methods">读取 config<br>显示 working / idle</div></div>
+        <div class="mod-card o"><div class="mod-file">inbox</div><div class="mod-name">send_message</div><div class="mod-methods">lead → teammate<br>追加 JSONL 消息</div></div>
+        <div class="mod-card s"><div class="mod-file">inbox</div><div class="mod-name">broadcast</div><div class="mod-methods">lead → all<br>全队同步指令</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s8">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
+  <div class="page-id">// structure &nbsp;·&nbsp; <span>Agent Team 的四层结构</span></div>
+  <div class="two-col wide-l">
+    <div class="col">
+      <div class="tag">STRUCTURE 08 · FOUR LAYERS</div>
+      <div class="h-main">Agent Team<br>= <em>四层协作结构</em></div>
+      <div class="desc">不要把 team 理解成“多调几次模型”。它至少包含一个总控、一组持久队友、一份团队花名册，以及一个消息总线。</div>
+      <div class="code-card green">
+        <div class="c-head"><div class="c-label g">mental model</div><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
+        <div class="c-body">
+          Agent Team<br>
+          ├── Lead Agent<br>
+          ├── Teammate Agents<br>
+          ├── .team/config.json<br>
+          └── .team/inbox/*.jsonl
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="mod-grid">
+        <div class="mod-card g"><div class="mod-file">Lead Agent</div><div class="mod-name">团队总控</div><div class="mod-methods"><span>spawn_teammate</span><br><span>send_message</span><br><span>read_inbox</span><br>拆任务、分派、汇总</div></div>
+        <div class="mod-card i"><div class="mod-file">Teammate Agent</div><div class="mod-name">固定队友</div><div class="mod-methods"><span>name</span> / <span>role</span> / <span>status</span><br>独立 agent loop<br>work → idle → work</div></div>
+        <div class="mod-card o"><div class="mod-file">Team Config</div><div class="mod-name">团队花名册</div><div class="mod-methods"><span>.team/config.json</span><br>team_name<br>members[]<br>状态可观察</div></div>
+        <div class="mod-card s"><div class="mod-file">MessageBus</div><div class="mod-name">文件消息层</div><div class="mod-methods"><span>.team/inbox/{name}.jsonl</span><br>send = append<br>read = drain</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s9">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
+  <div class="page-id">// runtime &nbsp;·&nbsp; <span>一次完整通信链路</span></div>
+  <div class="two-col wide-r">
+    <div class="col">
+      <div class="tag">RUNTIME 09 · MESSAGE FLOW</div>
+      <div class="h-main">从用户一句话<br>到<em>队友回禀</em></div>
+      <div class="desc">这一页是课堂上最值得慢讲的地方：team 的关键不是“多个模型一起跑”，而是消息在 lead、队友线程、文件 inbox 之间如何流动。</div>
+      <div class="terminal">
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">runtime trace</div></div>
+        <div class="term-body">
+          <span class="prompt">user</span> → 组一个 coder / reviewer 小队<br>
+          <span class="out">lead</span> → spawn_teammate("alice", "coder")<br>
+          <span class="dim">config</span> → members += {"name":"alice","status":"working"}<br>
+          <span class="out">alice loop</span> → tool use / write / read / run<br>
+          <span class="out">alice</span> → send_message("lead", "我改好了")<br>
+          <span class="prompt">lead</span> → read_inbox("lead") → 汇总给用户
+        </div>
+      </div>
+    </div>
+    <div class="col gap">
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">1</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">用户给目标</div><div class="frow-sub">Lead 判断这是长期协作，不是一次性 subagent</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">2</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">Lead 召入队友</div><div class="frow-sub">TeammateManager 写 config，并启动 daemon thread</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">3</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">队友独立工作</div><div class="frow-sub">自己的 messages + system prompt + teammate tools</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">4</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">inbox 回传</div><div class="frow-sub">send_message 追加 lead.jsonl，read_inbox 读取并清空</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">5</div></div><div class="frow-body"><div class="frow-name dim">状态回 idle</div><div class="frow-sub dim">队友不销毁，继续等下一封 inbox</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s10">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// summary &nbsp;·&nbsp; <span>完整心智模型</span></div>
+  <div class="two-col wide-l">
+    <div class="col">
+      <div class="tag">SUMMARY 10 · MENTAL MODEL</div>
+      <div class="h-main">Agent Team<br>就是<em>组织化协作</em></div>
+      <div class="desc">从工具调用，到子代理派遣，再到固定团队，Agent 的工程形态一步步从“会做事”变成“会组织别人做事”。</div>
+      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
+        <span class="badge-g">team config</span>
+        <span class="badge-i">named agents</span>
+        <span class="badge-o">file inbox</span>
+        <span class="badge-dim">persistent loop</span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="flow-col">
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-dim">s07</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name dim">Plan</div><div class="frow-sub dim">主 Agent 会拆任务</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">s08</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">Subagent</div><div class="frow-sub">临时隔离细节，上下文不污染</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">s09</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">Agent Team</div><div class="frow-sub">固定角色持续协作，inbox 异步通信</div></div></div>
+        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">next</div></div><div class="frow-body"><div class="frow-name">Orchestration</div><div class="frow-sub">审批、路由、记忆、监督和团队治理</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="nav">
+  <div class="nav-btn" id="prev">&#8592;</div>
+  <div class="nav-dots" id="dots"></div>
+  <div class="nav-count" id="count">1 / 11</div>
+  <div class="nav-btn" id="next">&#8594;</div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dotsEl = document.getElementById('dots');
+const countEl = document.getElementById('count');
+let cur = 0;
+
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'nav-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+
+function go(n) {
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('on');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('on');
+  countEl.textContent = `${cur + 1} / ${slides.length}`;
+}
+
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('next').onclick = () => go(cur + 1);
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); }
+});
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) go(dx < 0 ? cur + 1 : cur - 1);
+});
+</script>
+</body>
+</html>
