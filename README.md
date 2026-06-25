@@ -7,44 +7,15 @@
 
 配套讲解 PPT 见 [ppt/](ppt/)。
 
-<p align="center">
-  <img src="assets/readme/from-zero-to-emperor-agent.png" alt="从零实现 Agent 到产品化 Emperor Agent 的进阶路线图" width="920" />
-</p>
-
 ---
 
 ## 进阶项目推荐：Emperor Agent
 
-如果你已经理解本仓库教学示例的核心原理，可以继续看一个更完整的产品化形态。Emperor Agent 不是替代本仓库 step01 → step10 的入门路径，而是回答下一个问题：这些机制落到一个长期可用的本地产品里，会长成什么样。
-
-[TheSyart/emperor-agent](https://github.com/TheSyart/emperor-agent) — 一个本地运行的皇帝风格 AI Agent，带 Vue WebUI、多模型提供商、流式聊天、工具、Skills、记忆系统和 token 用量统计。
-
 <p align="center">
-  <img src="assets/readme/emperor-product-hero.png" alt="Emperor Agent 桌面工作台预览" width="920" />
+  <img src="assets/readme/emperoragent-wordmark.png" alt="Emperor Agent logo" width="520" />
 </p>
 
-它适合作为本仓库的进阶展示：从命令行教学示例进阶到 Electron + Vue 桌面工作台，从单一 Claude API 调用进阶到多模型提供商接入，从基础工具调用进阶到工具、Skills、MCP、记忆、Scheduler、权限控制和 telemetry 的完整组合。
-
-| 本仓库先学会 | Emperor Agent 里的产品化形态 |
-|---|---|
-| `messages.create` 与多轮历史 | Chat / Build 多会话，按 session 保存历史、checkpoint 和运行事件 |
-| Tool Use + Skills + MCP | 内置工具、按需技能加载、stdio / SSE MCP 外部工具统一调度 |
-| 三层记忆与自动 compact | Chat 写全局长期记忆，Build 写项目 `AGENTS.md` 托管记忆区块 |
-| 子代理与 Agent Team | Build 项目级内部 Team，子任务独立上下文执行，结果摘要回填 |
-| token 统计与上下文治理 | 多 provider / model 维度统计，工具结果截断与旧结果摘要化 |
-| 任务规划与长期任务 | Ask / Plan 权限流、Scheduler、Watchlist heartbeat 和主动 turn |
-
-<p align="center">
-  <img src="assets/readme/emperor-agent-ecosystem.png" alt="Emperor Agent 工具、记忆、团队与外部能力生态图" width="920" />
-</p>
-
-推荐阅读顺序：
-
-1. 先看 `desktop/`：理解 Electron + Vue 如何把本地 Agent 包成桌面工作台。
-2. 再看 `agent/sessions/`、`agent/runtime/`：理解多会话、流式事件和中断恢复。
-3. 接着看 `agent/memory.py`、`agent/projects/`：对照本仓库的三层记忆，理解 Chat / Build 的记忆分流。
-4. 然后看 `agent/mcp/` 和 `agent/tools/`：理解 MCP、内置工具、Skills 如何进入统一调度层。
-5. 最后看 `agent/control/`、`agent/permissions/`、`agent/scheduler/`、`agent/team/`：理解 Plan/Ask 权限、长期任务和项目级 Team 如何支撑真实工作流。
+[TheSyart/emperor-agent](https://github.com/TheSyart/emperor-agent) 是一个本地运行的个人 Agent 工作台，可以作为学完本仓库后的进阶参考。它把这里的 Tool Use、Skills、MCP、记忆、子代理和任务规划，进一步产品化到 Electron + Vue 桌面端、多模型路由、Scheduler 和项目级协作工作流里。
 
 ---
 
