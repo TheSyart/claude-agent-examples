@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tool · Skill · MCP：三个词一次讲明白</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:'IBM Plex Sans','PingFang SC',sans-serif;color:#E2E8F0}
+
+.deck{position:relative;width:100%;height:100%;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity 0.4s ease}
+.slide.active{opacity:1;pointer-events:all}
+
+/* nav */
+.nav{position:fixed;bottom:2vh;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:1.2vw;background:rgba(2,8,16,0.85);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(12px);padding:0.6vh 1.4vw;border-radius:999px;z-index:1000}
+.nav-btn{width:2.4vw;height:2.4vw;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.9vw;transition:all 0.2s;user-select:none}
+.nav-btn:hover{background:rgba(34,197,94,0.12);border-color:rgba(34,197,94,0.3);color:#22C55E}
+.nav-dots{display:flex;gap:0.5vw;align-items:center}
+.nav-dot{width:0.5vw;height:0.5vw;border-radius:50%;background:rgba(255,255,255,0.12);cursor:pointer;transition:all 0.2s}
+.nav-dot.on{background:#22C55E;box-shadow:0 0 6px #22C55E;width:1.4vw;border-radius:3px}
+.nav-count{font-family:'JetBrains Mono',monospace;font-size:0.7vw;color:#334155;min-width:3vw;text-align:center}
+
+/* bg */
+.bg{position:absolute;inset:0;pointer-events:none}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(34,197,94,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.03) 1px,transparent 1px);background-size:5vw 5vw}
+.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#22D3EE 40%,#6366F1 70%,#FB923C);z-index:50}
+
+/* common */
+.page-id{position:absolute;top:1.8vw;left:3vw;font-family:'JetBrains Mono',monospace;font-size:0.72vw;color:#1E3A2A;z-index:20}
+.page-id span{color:#22C55E}
+.tag{font-family:'JetBrains Mono',monospace;font-size:0.72vw;letter-spacing:0.14em;color:#22C55E;margin-bottom:0.8vw}
+.desc{font-size:0.95vw;color:#64748B;line-height:1.7;margin-bottom:1.8vw}
+.h-big{font-size:3.2vw;font-weight:900;letter-spacing:-0.02em;line-height:1.1;color:#F8FAFC}
+.grad-g{background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.t-tool{color:#22C55E}.t-skill{color:#22D3EE}.t-mcp{color:#FB923C}
+
+/* note box */
+.note-box{display:flex;align-items:flex-start;gap:0.8vw;padding:0.9vw 1.1vw;background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.18);border-radius:0.5vw;border-left:3px solid #22C55E}
+.note-icon{font-family:'JetBrains Mono',monospace;font-size:0.65vw;font-weight:700;color:#22C55E;flex-shrink:0;margin-top:0.1vw}
+.note-text{font-size:0.86vw;color:#4B6741;line-height:1.6}
+.note-text strong{color:#22C55E}
+
+/* chips */
+.chip-row{display:flex;flex-wrap:wrap;gap:0.6vw;margin-top:1vw}
+.chip{font-family:'JetBrains Mono',monospace;font-size:0.72vw;padding:0.3vw 0.8vw;border-radius:999px;border:1px solid rgba(34,197,94,0.25);background:rgba(34,197,94,0.08);color:#22C55E}
+.chip.orange{border-color:rgba(251,146,60,0.3);background:rgba(251,146,60,0.08);color:#FB923C}
+
+/* ══ S0 COVER ══ */
+#s0 .glow-l{position:absolute;width:55vw;height:100%;background:radial-gradient(ellipse at left center,rgba(34,197,94,0.08) 0%,transparent 60%)}
+#s0 .glow-r{position:absolute;width:30vw;height:60%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(251,146,60,0.07) 0%,transparent 65%)}
+#s0 .wrap{position:relative;z-index:10;display:grid;grid-template-columns:1fr 30vw;height:100%}
+#s0 .left{display:flex;flex-direction:column;justify-content:center;padding:4vw 3vw 4vw 5vw;border-right:1px solid rgba(34,197,94,0.08)}
+#s0 .chip-top{display:inline-flex;align-items:center;gap:0.6vw;font-family:'JetBrains Mono',monospace;font-size:0.82vw;letter-spacing:0.12em;color:#22C55E;margin-bottom:1.6vw}
+#s0 .chip-dot{width:0.5vw;height:0.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E;animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:0.3;box-shadow:none}}
+#s0 .h1{font-size:4.4vw;font-weight:900;line-height:1.02;letter-spacing:-0.03em;color:#F8FAFC;margin-bottom:0.5vw}
+#s0 .h1 .a{color:#22C55E}#s0 .h1 .b{color:#22D3EE}#s0 .h1 .c{color:#FB923C}#s0 .h1 .sep{color:#1E3A2A}
+#s0 .subtitle{font-size:1.05vw;color:#4B6741;margin-bottom:2.2vw;font-family:'JetBrains Mono',monospace}
+#s0 .terminal{background:#020810;border:1px solid rgba(34,197,94,0.18);border-radius:0.7vw;overflow:hidden;max-width:40vw;box-shadow:0 0 3vw rgba(34,197,94,0.06)}
+#s0 .term-bar{display:flex;align-items:center;gap:0.5vw;padding:0.7vw 1vw;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05)}
+#s0 .term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:0.72vw;color:#334155}
+#s0 .term-body{padding:1.2vw 1.4vw;font-family:'JetBrains Mono',monospace;font-size:0.9vw;line-height:2}
+#s0 .cursor{display:inline-block;width:0.6vw;height:1.1vw;background:#22C55E;margin-left:2px;vertical-align:middle;animation:cur 1.1s step-end infinite}
+@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
+#s0 .right{display:flex;flex-direction:column;justify-content:center;padding:3vw 3vw 3vw 2.5vw}
+#s0 .sec-label{font-family:'JetBrains Mono',monospace;font-size:0.68vw;letter-spacing:0.16em;color:#1E3A2A;margin-bottom:1.4vw}
+#s0 .step{display:flex;align-items:center;gap:1vw;padding:0.8vw 1.1vw;border-radius:0.5vw;margin-bottom:0.6vw;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.015)}
+#s0 .step.g{border-color:rgba(34,197,94,0.28);background:rgba(34,197,94,0.05)}
+#s0 .step.s{border-color:rgba(34,211,238,0.28);background:rgba(34,211,238,0.05)}
+#s0 .step.o{border-color:rgba(251,146,60,0.28);background:rgba(251,146,60,0.05)}
+#s0 .ico{width:2.2vw;height:2.2vw;border-radius:0.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.1vw}
+#s0 .step.g .ico{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3)}
+#s0 .step.s .ico{background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3)}
+#s0 .step.o .ico{background:rgba(251,146,60,0.12);border:1px solid rgba(251,146,60,0.3)}
+#s0 .sname{font-size:1vw;font-weight:700;color:#E2E8F0;line-height:1.1;margin-bottom:0.2vw}
+#s0 .shint{font-family:'JetBrains Mono',monospace;font-size:0.68vw;color:#475569}
+#s0 .footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;align-items:center;justify-content:space-between;z-index:20;font-family:'JetBrains Mono',monospace;font-size:0.72vw;color:#0F2A18}
+#s0 .footer span{color:#166534}
+
+/* ══ S1 一句话 + 比喻 ══ */
+#s1 .glow{position:absolute;width:60vw;height:80vh;top:10%;left:20%;background:radial-gradient(ellipse,rgba(99,102,241,0.06) 0%,transparent 65%)}
+#s1 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#s1 .big-line{font-size:1.9vw;font-weight:800;color:#F8FAFC;line-height:1.8;text-align:center;margin-bottom:2.4vw}
+#s1 .big-line .t-tool{color:#22C55E}#s1 .big-line .t-skill{color:#22D3EE}#s1 .big-line .t-mcp{color:#FB923C}
+#s1 .analogy{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2vw;max-width:74vw;width:100%}
+#s1 .ana{border-radius:0.8vw;padding:1.5vw 1vw;text-align:center;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02)}
+#s1 .ana .role{font-size:2.4vw;margin-bottom:0.5vw}
+#s1 .ana .who{font-size:1.15vw;font-weight:800;margin-bottom:0.25vw}
+#s1 .ana .map{font-size:0.82vw;color:#64748B}
+#s1 .ana.agent{border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.04)}#s1 .ana.agent .who{color:#818CF8}
+#s1 .ana.skill{border-color:rgba(34,211,238,0.3);background:rgba(34,211,238,0.04)}#s1 .ana.skill .who{color:#22D3EE}
+#s1 .ana.tool{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)}#s1 .ana.tool .who{color:#22C55E}
+#s1 .ana.mcp{border-color:rgba(251,146,60,0.3);background:rgba(251,146,60,0.04)}#s1 .ana.mcp .who{color:#FB923C}
+
+/* ══ S2 三个是什么 ══ */
+#s2 .glow-l{position:absolute;width:40vw;height:100%;top:0;left:0;background:radial-gradient(ellipse at left,rgba(34,197,94,0.06) 0%,transparent 65%)}
+#s2 .glow-r{position:absolute;width:40vw;height:100%;top:0;right:0;background:radial-gradient(ellipse at right,rgba(251,146,60,0.05) 0%,transparent 65%)}
+#s2 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#s2 .tri{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6vw;width:100%;max-width:78vw;margin-top:1.4vw}
+#s2 .cbox{border-radius:0.9vw;padding:2vw 1.8vw;text-align:center}
+#s2 .cbox.tool{border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.05)}
+#s2 .cbox.skill{border:1px solid rgba(34,211,238,0.35);background:rgba(34,211,238,0.05)}
+#s2 .cbox.mcp{border:1px solid rgba(251,146,60,0.35);background:rgba(251,146,60,0.05)}
+#s2 .cbox-icon{font-size:2.6vw;margin-bottom:0.6vw}
+#s2 .cbox-name{font-size:1.7vw;font-weight:900;margin-bottom:0.3vw}
+#s2 .cbox.tool .cbox-name{color:#22C55E}#s2 .cbox.skill .cbox-name{color:#22D3EE}#s2 .cbox.mcp .cbox-name{color:#FB923C}
+#s2 .cbox-one{font-size:1.05vw;font-weight:700;color:#E2E8F0;margin-bottom:1vw;line-height:1.4}
+#s2 .cbox-eg{font-size:0.86vw;color:#64748B;line-height:1.6}
+#s2 .cbox-eg b{color:#94A3B8;font-weight:700}
+
+
+/* ══ S-SK Skill 怎么被调用：渐进式披露 ══ */
+#sSk .glow{position:absolute;width:55vw;height:80vh;top:10%;left:5%;background:radial-gradient(ellipse,rgba(34,211,238,0.06) 0%,transparent 65%)}
+#sSk .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:0.9fr 1.1fr;padding:4vw 4vw 3vw;gap:3vw}
+#sSk .left{display:flex;flex-direction:column;justify-content:center}
+#sSk .right{display:flex;flex-direction:column;justify-content:center;gap:1vw}
+/* 三层按需加载卡，自上而下依次点亮 */
+#sSk .layer{position:relative;border-radius:0.7vw;padding:1vw 1.3vw;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);animation:sklight 6s ease-in-out infinite}
+#sSk .layer.l1{margin-left:0;animation-delay:0s;border-color:rgba(34,211,238,0.35);background:rgba(34,211,238,0.05)}
+#sSk .layer.l2{margin-left:2.5vw;animation-delay:2s}
+#sSk .layer.l3{margin-left:5vw;animation-delay:4s}
+@keyframes sklight{0%,40%,100%{opacity:0.45;transform:translateX(0)}12%{opacity:1;transform:translateX(0.4vw)}}
+#sSk .layer .lv{position:absolute;top:1vw;right:1.1vw;font-family:'JetBrains Mono',monospace;font-size:0.62vw;color:#475569}
+#sSk .layer .lt{font-size:1vw;font-weight:800;color:#E2E8F0;margin-bottom:0.2vw}
+#sSk .layer.l1 .lt{color:#22D3EE}
+#sSk .layer .ls{font-size:0.8vw;color:#64748B;line-height:1.5}
+#sSk .layer .lcode{font-family:'JetBrains Mono',monospace;font-size:0.74vw;color:#94A3B8;margin-top:0.25vw}
+#sSk .arrow-down{text-align:center;color:#22D3EE;font-size:1vw;line-height:1;margin:-0.3vw 0}
+.chip.cyan{border-color:rgba(34,211,238,0.3);background:rgba(34,211,238,0.08);color:#22D3EE}
+
+/* ══ S-TL Tool 怎么被调用：function calling 循环 ══ */
+#sTl .glow{position:absolute;width:55vw;height:80vh;top:10%;left:20%;background:radial-gradient(ellipse,rgba(34,197,94,0.06) 0%,transparent 65%)}
+#sTl .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#sTl .loop4{display:flex;align-items:stretch;justify-content:center;gap:0;margin-top:1.2vw;width:100%;max-width:80vw}
+#sTl .step{flex:1;border-radius:0.7vw;padding:1.1vw 0.9vw;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);text-align:center;animation:tlstep 6s ease-in-out infinite}
+#sTl .step.s1{animation-delay:0s}#sTl .step.s2{animation-delay:1.5s}#sTl .step.s3{animation-delay:3s}#sTl .step.s4{animation-delay:4.5s}
+@keyframes tlstep{0%,35%,100%{opacity:0.5;border-color:rgba(255,255,255,0.07)}10%{opacity:1;border-color:rgba(34,197,94,0.5);box-shadow:0 0 1.5vw rgba(34,197,94,0.18)}}
+#sTl .step .sn{font-family:'JetBrains Mono',monospace;font-size:0.62vw;color:#22C55E}
+#sTl .step .sh{font-size:1vw;font-weight:800;color:#E2E8F0;margin:0.3vw 0 0.25vw}
+#sTl .step .sd{font-size:0.76vw;color:#64748B;line-height:1.45}
+#sTl .conn{display:flex;align-items:center;justify-content:center;width:2.2vw;flex-shrink:0;color:#22C55E;font-size:1.1vw}
+#sTl .loopback{margin-top:0.7vw;font-family:'JetBrains Mono',monospace;font-size:0.74vw;color:#22C55E;text-align:center}
+#sTl .callcard{margin-top:1.4vw;background:#020810;border:1px solid rgba(34,197,94,0.25);border-radius:0.6vw;padding:0.8vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:0.84vw;color:#94A3B8}
+#sTl .callcard .k{color:#22C55E}#sTl .callcard .v{color:#E2E8F0}
+
+/* ══ S-MC MCP 怎么被调用：连接 + schema 转换 ══ */
+#sMc .glow{position:absolute;width:55vw;height:80vh;top:10%;left:18%;background:radial-gradient(ellipse,rgba(251,146,60,0.06) 0%,transparent 65%)}
+#sMc .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#sMc .pipe{display:grid;grid-template-columns:1fr 1.3fr 1fr;align-items:center;gap:0;width:100%;max-width:80vw;margin-top:1.2vw}
+#sMc .box{border-radius:0.7vw;padding:1.3vw 1.1vw;text-align:center}
+#sMc .box.host{border:1px solid rgba(99,102,241,0.35);background:rgba(99,102,241,0.06)}
+#sMc .box.server{border:1px solid rgba(251,146,60,0.35);background:rgba(251,146,60,0.06)}
+#sMc .box .bt{font-size:1.15vw;font-weight:900;margin-bottom:0.2vw}
+#sMc .box.host .bt{color:#818CF8}#sMc .box.server .bt{color:#FB923C}
+#sMc .box .bs{font-size:0.78vw;color:#64748B;line-height:1.5}
+#sMc .box .bm{font-family:'JetBrains Mono',monospace;font-size:0.66vw;color:#475569;margin-top:0.35vw}
+#sMc .mid{display:flex;flex-direction:column;gap:0.9vw;padding:0 1vw}
+/* 两条流动的线：上行 schema（启动），下行 call/result */
+#sMc .wire{position:relative;height:2.2vw;border-radius:999px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#sMc .wire .wlabel{position:relative;z-index:2;font-family:'JetBrains Mono',monospace;font-size:0.7vw}
+#sMc .wire.up .wlabel{color:#FB923C}#sMc .wire.down .wlabel{color:#818CF8}
+#sMc .wire .flux{position:absolute;top:0;bottom:0;width:40%;background:linear-gradient(90deg,transparent,rgba(251,146,60,0.22),transparent)}
+#sMc .wire.up .flux{animation:fluxleft 2.4s linear infinite}
+#sMc .wire.down .flux{background:linear-gradient(90deg,transparent,rgba(129,140,248,0.22),transparent);animation:fluxright 2.4s linear infinite}
+@keyframes fluxleft{0%{left:100%}100%{left:-40%}}
+@keyframes fluxright{0%{left:-40%}100%{left:100%}}
+#sMc .phase{display:flex;gap:1.4vw;margin-top:1.6vw;max-width:74vw}
+#sMc .ph{flex:1;border-radius:0.6vw;padding:0.9vw 1.1vw;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.015)}
+#sMc .ph .pn{font-family:'JetBrains Mono',monospace;font-size:0.66vw;color:#FB923C;margin-bottom:0.3vw}
+#sMc .ph .pt{font-size:0.92vw;font-weight:700;color:#E2E8F0;margin-bottom:0.2vw}
+#sMc .ph .pd{font-size:0.78vw;color:#64748B;line-height:1.5}
+
+/* ══ S4 三者怎么配合 ══ */
+#s4 .glow{position:absolute;width:60vw;height:100%;top:0;left:-5%;background:radial-gradient(ellipse at left,rgba(34,197,94,0.06) 0%,transparent 65%)}
+#s4 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#s4 .s4-head{margin-bottom:2vw;text-align:center}
+#s4 .s4-head .htitle{font-size:1.5vw;font-weight:800;color:#F8FAFC;line-height:1.4}
+#s4 .bigcards{display:flex;flex-direction:row;gap:1.6vw;width:100%;max-width:82vw}
+#s4 .bcard{position:relative;flex:1;display:flex;flex-direction:column;border-radius:0.75vw;padding:1.8vw 1.6vw;border:1px solid rgba(255,255,255,0.08);overflow:hidden;animation:cardpulse 5.4s ease-in-out infinite}
+#s4 .bcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+#s4 .bcard.skill{border-color:rgba(34,211,238,0.42);background:rgba(34,211,238,0.06);--gl:rgba(34,211,238,0.22);animation-delay:0s}
+#s4 .bcard.skill::before{background:#22D3EE}
+#s4 .bcard.tool{border-color:rgba(34,197,94,0.42);background:rgba(34,197,94,0.06);--gl:rgba(34,197,94,0.22);animation-delay:1.1s}
+#s4 .bcard.tool::before{background:#22C55E}
+#s4 .bcard.mcp{border-color:rgba(251,146,60,0.42);background:rgba(251,146,60,0.06);--gl:rgba(251,146,60,0.22);animation-delay:2.2s}
+#s4 .bcard.mcp::before{background:#FB923C}
+@keyframes cardpulse{0%,32%,100%{transform:scale(1);box-shadow:0 0 0 transparent}8%{transform:scale(1.03);box-shadow:0 0 2vw var(--gl)}}
+#s4 .role-tag{font-family:'JetBrains Mono',monospace;font-size:0.66vw;margin-bottom:0.8vw}
+#s4 .bcard.skill .role-tag{color:#22D3EE99}
+#s4 .bcard.tool .role-tag{color:#22C55E99}
+#s4 .bcard.mcp .role-tag{color:#FB923C99}
+#s4 .bicon{font-size:2vw;margin-bottom:0.5vw}
+#s4 .bterm{display:flex;align-items:baseline;gap:0.6vw;margin-bottom:0.5vw}
+#s4 .bterm .big{font-size:2vw;font-weight:900;letter-spacing:-0.01em;line-height:1}
+#s4 .bcard.skill .big{color:#22D3EE}#s4 .bcard.tool .big{color:#22C55E}#s4 .bcard.mcp .big{color:#FB923C}
+#s4 .bterm .cn{font-size:1vw;font-weight:700;color:#CBD5E1}
+#s4 .bdesc{font-size:0.84vw;color:#64748B;line-height:1.6}
+#s4 .pnote{margin-top:1.6vw;font-size:0.88vw;color:#4B6741;line-height:1.6;text-align:center;max-width:70vw}
+#s4 .pnote .t-sk{color:#22D3EE}#s4 .pnote .t-tl{color:#22C55E}#s4 .pnote .t-mc{color:#FB923C}
+
+/* ══ S5 跑一个看看 ══ */
+#s5 .glow{position:absolute;width:50vw;height:80vh;top:10%;left:25%;background:radial-gradient(ellipse,rgba(251,146,60,0.06) 0%,transparent 65%)}
+#s5 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1.1fr;padding:4vw 4vw 3vw;gap:3vw}
+#s5 .left{display:flex;flex-direction:column;justify-content:center}
+#s5 .right{display:flex;flex-direction:column;justify-content:center}
+#s5 .code-card{background:#020810;border:1px solid rgba(251,146,60,0.2);border-radius:0.7vw;overflow:hidden;margin-bottom:1vw}
+#s5 .c-head{padding:0.6vw 1vw;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:space-between}
+#s5 .c-label{font-family:'JetBrains Mono',monospace;font-size:0.68vw;color:#FB923C}
+#s5 .dots{display:flex;gap:0.4vw}.dot{width:0.65vw;height:0.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
+#s5 .c-body{padding:0.9vw 1.2vw;font-family:'JetBrains Mono',monospace;font-size:0.78vw;line-height:1.8}
+#s5 .st{color:#FB923C}.va{color:#E2E8F0}.kw{color:#6366F1}
+#s5 .terminal{background:#020810;border:1px solid rgba(251,146,60,0.2);border-radius:0.7vw;overflow:hidden}
+#s5 .term-bar{display:flex;align-items:center;gap:0.5vw;padding:0.7vw 1vw;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05)}
+#s5 .term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:0.72vw;color:#334155}
+#s5 .term-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:0.82vw;line-height:1.95;color:#64748B}
+#s5 .prompt{color:#FB923C}.out{color:#94A3B8}.dim{color:#334155}
+
+/* ══ S6 结尾 ══ */
+#s6 .glow{position:absolute;width:70vw;height:100%;top:0;left:15%;background:radial-gradient(ellipse,rgba(34,197,94,0.08) 0%,transparent 65%)}
+#s6 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw;text-align:center}
+#s6 .end-line{font-size:1.7vw;font-weight:700;color:#F8FAFC;line-height:1.9;margin-bottom:2vw;max-width:66vw}
+#s6 .end-line .t-tool{color:#22C55E}#s6 .end-line .t-skill{color:#22D3EE}#s6 .end-line .t-mcp{color:#FB923C}#s6 .end-line .t-agent{color:#818CF8}
+#s6 .next{font-family:'JetBrains Mono',monospace;font-size:0.95vw;color:#22C55E;margin-bottom:2vw}
+#s6 .cta-row{display:flex;gap:1.5vw;justify-content:center}
+#s6 .cta-btn{font-family:'JetBrains Mono',monospace;font-size:0.88vw;padding:0.7vw 2vw;border-radius:999px;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.06);color:#22C55E}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ══ SLIDE 0: 封面 ══ -->
+<div class="slide active" id="s0">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="chip-top"><div class="chip-dot"></div>AGENT 进阶 &nbsp;·&nbsp; 第七期</div>
+      <div class="h1"><span class="a">Tool</span><span class="sep"> · </span><span class="b">Skill</span><span class="sep"> · </span><span class="c">MCP</span></div>
+      <div class="subtitle">// 三个词，一次讲明白</div>
+      <div class="terminal">
+        <div class="term-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <div class="term-title">一句话记住它仨</div>
+        </div>
+        <div class="term-body">
+          <div><span style="color:#22C55E">Tool</span><span style="color:#E2E8F0">  = 一台厨具，能真动手</span></div>
+          <div><span style="color:#22D3EE">Skill</span><span style="color:#E2E8F0"> = 一张菜谱，安排做法</span></div>
+          <div><span style="color:#FB923C">MCP</span><span style="color:#E2E8F0">   = 手机线上接单，调外部厨房</span><span class="cursor"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="sec-label">// 这一期看啥</div>
+      <div class="step g"><div class="ico">🔧</div><div><div class="sname">它仨分别是啥</div><div class="shint">用大白话 + 生活例子</div></div></div>
+      <div class="step s"><div class="ico">🔄</div><div><div class="sname">三者怎么被调用</div><div class="shint">渐进式披露 · function calling · schema 转换</div></div></div>
+      <div class="step o"><div class="ico">🧭</div><div><div class="sname">顺带分清别搞混</div><div class="shint">谁指挥谁、谁接进谁</div></div></div>
+      <div class="step o"><div class="ico">🤝</div><div><div class="sname">配合起来干活</div><div class="shint">写周报的小例子 + 真能跑</div></div></div>
+    </div>
+  </div>
+  <div class="footer"><div>菜谱管流程 + 厨具真执行 + 手机接外援 = <span>能办事的 Agent</span></div><div>3 个词 · 9 页</div></div>
+</div>
+
+<!-- ══ SLIDE 1: 一句话 + 比喻 ══ -->
+<div class="slide" id="s1">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 2 页 &nbsp;—&nbsp; <span>一个比喻就懂</span></div>
+  <div class="wrap">
+    <div class="tag">换个更顺的比方</div>
+    <div class="big-line">
+      把 Agent 想成一个<span style="color:#818CF8">主厨</span>：<br>
+      <span class="t-skill">Skill</span> 是<span class="t-skill">菜谱</span>，<span class="t-tool">Tool</span> 是<span class="t-tool">厨具</span>，<span class="t-mcp">MCP</span> 是<span class="t-mcp">手机线上接单</span>
+    </div>
+    <div class="analogy">
+      <div class="ana agent"><div class="role">👨‍🍳</div><div class="who">主厨</div><div class="map">Agent · 接单、判断、安排先后</div></div>
+      <div class="ana skill"><div class="role">📖</div><div class="who">菜谱</div><div class="map">Skill · 告诉先做什么后做什么</div></div>
+      <div class="ana tool"><div class="role">🍳</div><div class="who">厨具</div><div class="map">Tool · 切、煮、称、发，真执行</div></div>
+      <div class="ana mcp"><div class="role">📱</div><div class="who">手机线上接单</div><div class="map">MCP · 自家不够用，线上下单，外面做好端回来</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2: 三个是什么 ══ -->
+<div class="slide" id="s2">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
+  <div class="page-id">// 第 3 页 &nbsp;—&nbsp; <span>它仨到底是啥</span></div>
+  <div class="wrap">
+    <div class="tag">一个一个说</div>
+    <div class="h-big">它仨<span class="grad-g">到底是啥</span></div>
+    <div class="tri">
+      <div class="cbox tool">
+        <div class="cbox-icon">🍳</div>
+        <div class="cbox-name">Tool</div>
+        <div class="cbox-one">能真动手的一台厨具</div>
+        <div class="cbox-eg">菜刀切、炒锅煮、秤称、烤箱烤——<br>给料下去，出结果；<br>一件事一台厨具，越专一越好。</div>
+      </div>
+      <div class="cbox skill">
+        <div class="cbox-icon">📖</div>
+        <div class="cbox-name">Skill</div>
+        <div class="cbox-one">把多步骤编成顺序的菜谱</div>
+        <div class="cbox-eg">比如红烧肉 SOP：<br>先炒糖色、下肉煸炒、再加料焖煮。<br>菜谱不动手，只安排先后顺序。</div>
+      </div>
+      <div class="cbox mcp">
+        <div class="cbox-icon">📱</div>
+        <div class="cbox-name">MCP</div>
+        <div class="cbox-one">手机叫外卖，到了就能用</div>
+        <div class="cbox-eg">自家厨房做不了的，叫外卖解决。<br>外卖到了就是能用的菜，<br>不用自己再开一个厨房。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE MC: MCP 怎么被调用（schema 发现 + tool call） ══ -->
+<div class="slide" id="sMc">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 4 页 &nbsp;—&nbsp; <span>MCP 怎么被调用</span></div>
+  <div class="wrap">
+    <div class="tag">Model Context Protocol · 外部工具怎么接进来</div>
+    <div class="h-big" style="text-align:center;margin-bottom:0.5vw">外面的工具，<span style="background:linear-gradient(120deg,#FB923C,#FDBA74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">怎么接过来调</span></div>
+    <div style="text-align:center;font-size:0.74vw;color:#64748B;max-width:58vw;margin:0 auto 1.2vw;line-height:1.7">Anthropic 2024 年底发布的开放协议。以前每个 Agent 接 GitHub、数据库都要自己写对接代码，格式各不同、维护成本高。<br>MCP 定了统一的"对话语言"：<span style="color:#FB923C">Server</span> 按协议暴露能力，<span style="color:#FB923C">Client</span>（Agent）按协议发现和调用。</div>
+    <div class="pipe">
+      <div class="box host"><div class="bt">Host</div><div class="bs">装着模型的 Agent 应用</div><div class="bm">MCP Client</div></div>
+      <div class="mid">
+        <div class="wire up"><div class="flux"></div><span class="wlabel">① 启动：schema →</span></div>
+        <div class="wire down"><div class="flux"></div><span class="wlabel">② 调用：tool call →，结果回</span></div>
+      </div>
+      <div class="box server"><div class="bt">Server</div><div class="bs">外部工具（GitHub、时间…）</div><div class="bm">stdio / HTTP</div></div>
+    </div>
+    <div class="phase">
+      <div class="ph">
+        <div class="pn">// 启动握手</div>
+        <div class="pt">Server 报 schema，Agent 收下翻译</div>
+        <div class="pd">Server 把"我能做哪些工具"的 schema 递过来，Agent 收下、翻成模型认识的工具格式，注册进可用 Tool 列表。</div>
+      </div>
+      <div class="ph">
+        <div class="pn">// 真调用</div>
+        <div class="pt">Agent 发 tool call，MCP 转交执行</div>
+        <div class="pd">模型发出 tool call，Host 经 MCP 把请求转给 Server 真执行，结果原路端回模型。</div>
+      </div>
+    </div>
+    <div class="chip-row" style="justify-content:center"><span class="chip orange">启动报 schema · 转成 Tool · tool call 转交执行</span></div>
+    <div class="note-box" style="margin-top:1.3vw;max-width:66vw;background:rgba(251,146,60,0.04);border-color:rgba(251,146,60,0.18);border-left-color:#FB923C">
+      <div class="note-icon" style="color:#FB923C">辨</div>
+      <div class="note-text" style="color:#6B5A45"><strong style="color:#FB923C">Skill</strong> 是"菜谱"，管怎么组合 Tool；<strong style="color:#FB923C">MCP</strong> 是"手机接单"，管外部 Tool 怎么接进来——一个管做法，一个管连接。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE SK: Skill 怎么被调用（渐进式披露） ══ -->
+<div class="slide" id="sSk">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 5 页 &nbsp;—&nbsp; <span>Skill 怎么被调用</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">Skill 怎么被加载</div>
+      <div class="h-big" style="margin-bottom:0.8vw">用到哪个 Skill<br><span style="background:linear-gradient(120deg,#22D3EE,#67E8F9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">才加载那个</span></div>
+      <div class="desc">Skill 是描述 Agent 行为的 SOP 文件：告诉 Agent 分哪几步、依赖哪些 Tool、输出什么格式。自己不执行，执行交给 Tool。Agent 不会把所有 Skill 全塞进上下文——分三层按需加载。</div>
+      <div class="note-box" style="background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.18);border-left-color:#22D3EE">
+        <div class="note-icon" style="color:#22D3EE">名</div>
+        <div class="note-text" style="color:#4A6571">按需加载这套机制有个正经名字叫<strong style="color:#22D3EE">渐进式披露</strong>（progressive disclosure），图的就是省上下文 token，别一上来就把全部 Skill 都塞给模型。</div>
+      </div>
+      <div class="chip-row"><span class="chip cyan">渐进式披露 · progressive disclosure</span></div>
+    </div>
+    <div class="right" style="gap:0.45vw">
+      <div class="layer l1" style="padding:0.6vw 1vw">
+        <div class="lv">System Prompt 里只有这一行</div>
+        <div class="lt">① 菜单行（始终加载）</div>
+        <div class="lcode" style="margin-top:0.3vw">red-braised-pork — 制作红烧肉的 SOP</div>
+        <div class="ls" style="font-size:0.7vw;margin-top:0.25vw">几乎不占 token，Agent 靠这一句判断要不要激活这个 Skill。</div>
+      </div>
+      <div class="arrow-down" style="margin:-0.4vw 0">↓ 决定要用，才读入完整文件</div>
+      <div class="layer l2" style="padding:0.6vw 1vw">
+        <div class="lv">读入完整 SKILL.md</div>
+        <div class="lt">② 完整定义（命中才加载）</div>
+        <div style="background:#071210;border:1px solid rgba(34,211,238,0.18);border-radius:0.4vw;padding:0.45vw 0.8vw;margin-top:0.3vw;font-family:'JetBrains Mono',monospace;font-size:0.59vw;line-height:1.55;color:#64748B">
+          <span style="color:#22D3EE"># red-braised-pork</span>&nbsp;&nbsp;<span style="color:#475569">// 制作红烧肉</span><br><br>
+          <span style="color:#22D3EE">## 步骤</span><br>
+          1. <span style="color:#22C55E">prep_tool</span> &nbsp;→ 切肉、备香料<br>
+          2. <span style="color:#22C55E">fry_tool</span> &nbsp;&nbsp;→ 炒糖色 180°C<br>
+          3. <span style="color:#22C55E">cook_tool</span> &nbsp;→ 焖煮 40min<br>
+          4. <span style="color:#22C55E">plate_tool</span> → 装盘出品<br><br>
+          <span style="color:#22D3EE">## 工具依赖</span>&nbsp;&nbsp;<span style="color:#22C55E">prep</span> · <span style="color:#22C55E">fry</span> · <span style="color:#22C55E">cook</span> · <span style="color:#22C55E">plate</span><br>
+          <span style="color:#22D3EE">## 输出</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94A3B8">成品红烧肉，色泽红亮</span>
+        </div>
+      </div>
+      <div class="arrow-down" style="margin:-0.4vw 0">↓ 走到装盘步骤，才读</div>
+      <div class="layer l3" style="padding:0.6vw 1vw">
+        <div class="lv">引用的模板文件</div>
+        <div class="lt">③ 模板（用到才读）</div>
+        <div style="background:#071210;border:1px solid rgba(34,211,238,0.18);border-radius:0.4vw;padding:0.45vw 0.8vw;margin-top:0.3vw;font-family:'JetBrains Mono',monospace;font-size:0.59vw;line-height:1.6;color:#64748B">
+          食材：<span style="color:#FB923C">{{ingredients}}</span>&nbsp;&nbsp;切法：<span style="color:#FB923C">{{prep_method}}</span><br>
+          步骤：<span style="color:#FB923C">{{steps}}</span><br>
+          出品标准：<span style="color:#FB923C">{{standard}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE TL: Tool 怎么被调用（function calling 循环） ══ -->
+<div class="slide" id="sTl">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 6 页 &nbsp;—&nbsp; <span>Tool 怎么被调用</span></div>
+  <div class="wrap">
+    <div class="tag">Skill 指到哪步，Tool 就执行哪步</div>
+    <div class="h-big" style="text-align:center;margin-bottom:0.4vw">点名 → 执行 → <span class="grad-g">回灌</span></div>
+    <div class="loop4">
+      <div class="step s1"><div class="sn">① 模型</div><div class="sh">挑工具 + 填参数</div><div class="sd">Skill 到第几步，就下那个 Tool 的单</div></div>
+      <div class="conn">→</div>
+      <div class="step s2"><div class="sn">② 运行时</div><div class="sh">真去执行</div><div class="sd">跑代码 / 调 API，模型不动手</div></div>
+      <div class="conn">→</div>
+      <div class="step s3"><div class="sn">③ 结果</div><div class="sh">返回 observation</div><div class="sd">这步结果端回给模型</div></div>
+      <div class="conn">→</div>
+      <div class="step s4"><div class="sn">④ 模型</div><div class="sh">读结果，进下一步</div><div class="sd">没问题就让 Skill 推进下一个 Tool</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:0.5vw;margin:0.6vw 0;font-size:0.67vw;font-family:'JetBrains Mono',monospace">
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:0.4vw;padding:0.32vw 0.7vw;color:#86EFAC"><span style="color:#22C55E">prep_tool</span>&nbsp;&nbsp;切肉、备香料</div>
+      <div style="color:#1E3A2A;font-size:0.9vw">→</div>
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:0.4vw;padding:0.32vw 0.7vw;color:#86EFAC"><span style="color:#22C55E">fry_tool</span>&nbsp;&nbsp;&nbsp;炒糖色 180°C</div>
+      <div style="color:#1E3A2A;font-size:0.9vw">→</div>
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:0.4vw;padding:0.32vw 0.7vw;color:#86EFAC"><span style="color:#22C55E">cook_tool</span>&nbsp;&nbsp;焖煮 40min</div>
+      <div style="color:#1E3A2A;font-size:0.9vw">→</div>
+      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.22);border-radius:0.4vw;padding:0.32vw 0.7vw;color:#86EFAC"><span style="color:#22C55E">plate_tool</span>&nbsp;装盘出品</div>
+      <div style="color:#22C55E;margin-left:0.4vw;font-family:sans-serif;font-size:0.7vw">→ 红烧肉完成 ✓</div>
+    </div>
+    <div class="loopback">↻ 每圈对应 Skill 的一步，四圈跑完，任务结束</div>
+    <div class="callcard"><span class="k">"name"</span>: <span class="v">"prep_tool"</span>, <span class="k">"args"</span>: { <span class="k">"action"</span>: <span class="v">"切肉、备香料"</span> }&nbsp;&nbsp;<span style="color:#475569">// Skill 第 1 步吐出来的点菜单</span></div>
+    <div class="chip-row" style="justify-content:center"><span class="chip">function calling · 模型点名 → 运行时执行 → 结果回灌</span></div>
+    <div class="note-box" style="margin-top:0.8vw;max-width:64vw">
+      <div class="note-icon">辨</div>
+      <div class="note-text">谁在调它？<strong>Skill</strong> 按步骤指挥，一个 Skill 能依次调好多 Tool。分不清 Skill 还是 Tool？问它会不会真执行——会执行就是 Tool，只安排顺序就是 Skill。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE EX: 红烧肉串联三词 ══ -->
+<div class="slide" id="sEx">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 7 页 &nbsp;—&nbsp; <span>串联起来看一遍</span></div>
+  <div class="wrap" style="position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.8vw;padding:2.5vw 5vw">
+    <div class="tag" style="align-self:center">来份红烧肉——MCP / Skill / Tool 怎么分工</div>
+    <div class="h-big" style="text-align:center;font-size:2.6vw;margin-bottom:0">一道菜，走一遍</div>
+    <div style="display:flex;gap:0;align-items:stretch;width:100%;margin-top:0.2vw">
+      <!-- MCP -->
+      <div style="flex:1;background:rgba(251,146,60,0.06);border:1.5px solid rgba(251,146,60,0.28);border-radius:0.9vw 0 0 0.9vw;padding:2vw 1.6vw;display:flex;flex-direction:column;gap:0.8vw">
+        <div style="color:#FB923C;font-size:0.7vw;font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">① MCP · 接单</div>
+        <div style="color:#FDBA74;font-size:1.15vw;font-weight:700">外卖平台报菜单</div>
+        <div style="color:#78716C;font-size:0.76vw;line-height:1.75;flex:1">MCP Server 启动时报 schema：<br>"我能做红烧肉……"<br><br>Agent 把 <span style="color:#FB923C;font-family:monospace;background:rgba(251,146,60,0.1);padding:0.1em 0.3em;border-radius:0.2em">cook_dish</span><br>注册为可用 Tool。</div>
+      </div>
+      <!-- arrow -->
+      <div style="display:flex;align-items:center;padding:0 0.8vw;color:#1E3A2A;font-size:1.8vw;flex-shrink:0">→</div>
+      <!-- Skill -->
+      <div style="flex:1;background:rgba(34,211,238,0.06);border-top:1.5px solid rgba(34,211,238,0.28);border-bottom:1.5px solid rgba(34,211,238,0.28);padding:2vw 1.6vw;display:flex;flex-direction:column;gap:0.8vw">
+        <div style="color:#22D3EE;font-size:0.7vw;font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">② Skill · 翻菜谱</div>
+        <div style="color:#67E8F9;font-size:1.15vw;font-weight:700">红烧肉 SOP 排步骤</div>
+        <div style="color:#4A6571;font-size:0.74vw;line-height:1.8;font-family:'JetBrains Mono',monospace;flex:1">prep_tool &nbsp;→ 切肉备料<br>fry_tool &nbsp;&nbsp;→ 炒糖色<br>cook_tool &nbsp;→ 焖煮<br>plate_tool → 装盘<br><br><span style="color:#22D3EE;font-family:sans-serif;font-size:0.7vw">只排顺序，不动手</span></div>
+      </div>
+      <!-- arrow -->
+      <div style="display:flex;align-items:center;padding:0 0.8vw;color:#1E3A2A;font-size:1.8vw;flex-shrink:0">→</div>
+      <!-- Tool -->
+      <div style="flex:1;background:rgba(34,197,94,0.06);border:1.5px solid rgba(34,197,94,0.28);border-radius:0 0.9vw 0.9vw 0;padding:2vw 1.6vw;display:flex;flex-direction:column;gap:0.8vw">
+        <div style="color:#22C55E;font-size:0.7vw;font-family:'JetBrains Mono',monospace;letter-spacing:0.04em">③ Tool · 真动手</div>
+        <div style="color:#86EFAC;font-size:1.15vw;font-weight:700">function calling 执行</div>
+        <div style="color:#374B3A;font-size:0.74vw;line-height:1.8;font-family:'JetBrains Mono',monospace;flex:1"><span style="color:#22C55E">prep_tool</span>({action:"切肉"})<br><span style="color:#22C55E">fry_tool</span>({temp:"180°C"})<br><span style="color:#22C55E">cook_tool</span>({time:"40min"})<br><span style="color:#22C55E">plate_tool</span>({style:"红亮"})<br><br><span style="color:#22C55E;font-family:sans-serif;font-size:0.7vw">→ 红烧肉完成 ✓</span></div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:0.7vw;padding:0.8vw 2vw;color:#475569;font-size:0.72vw;text-align:center;width:100%;box-sizing:border-box">
+      MCP 管接外部能力 &nbsp;·&nbsp; Skill 管编排步骤 &nbsp;·&nbsp; Tool 管真去执行
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4: 三者怎么配合 ══ -->
+<div class="slide" id="s4">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 8 页 &nbsp;—&nbsp; <span>三者怎么配合</span></div>
+  <div class="wrap">
+    <div class="s4-head">
+      <div class="tag">配合起来干活</div>
+      <div class="htitle">Agent 接到任务，三者各司其职</div>
+    </div>
+    <div class="bigcards">
+      <div class="bcard skill">
+        <div class="role-tag">// 调度</div>
+        <div class="bicon">📖</div>
+        <div class="bterm"><span class="big">SKILL</span><span class="cn">菜谱</span></div>
+        <div class="bdesc">接到任务先翻菜谱——定顺序、定格式，决定先调哪个 Tool、后调哪个 Tool</div>
+      </div>
+      <div class="bcard tool">
+        <div class="role-tag">// 执行</div>
+        <div class="bicon">🍳</div>
+        <div class="bterm"><span class="big">TOOL</span><span class="cn">厨具</span></div>
+        <div class="bdesc">Skill 指挥时真动手——读文件、跑脚本、发消息，结果回灌给模型</div>
+      </div>
+      <div class="bcard mcp">
+        <div class="role-tag">// 扩展</div>
+        <div class="bicon">📱</div>
+        <div class="bterm"><span class="big">MCP</span><span class="cn">手机接单</span></div>
+        <div class="bdesc">自家做不了，手机叫外卖，到了就能用</div>
+      </div>
+    </div>
+    <div class="pnote"><span class="t-sk">Skill</span> 指挥 <span class="t-tl">Tool</span>，<span class="t-mc">MCP</span> 扩展 <span class="t-tl">Tool</span> 的来源——三者缺一，活就干不顺。</div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5: 跑一个看看 ══ -->
+<div class="slide" id="s5">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="page-id">// 第 9 页 &nbsp;—&nbsp; <span>真能跑</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">动手试试 · MCP</div>
+      <div class="h-big" style="margin-bottom:0.8vw">配一行<br><span class="t-mcp">就接进来</span></div>
+      <div class="desc">想用一个"报时间"的外部工具？不用写代码——在配置里写一行，启动时它就像外部厨房报了菜单，模型直接能点。</div>
+      <div class="code-card">
+        <div class="c-head"><span class="c-label">mcp_servers.json</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
+        <div class="c-body">
+<span class="st">"time"</span>: { <span class="st">"command"</span>: <span class="st">"python"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="st">"args"</span>: [<span class="st">"…/mcp_server_time.py"</span>] }
+        </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="terminal">
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">跑起来看看</div></div>
+        <div class="term-body">
+          <span class="prompt">$</span> python step10_mcp.py<br>
+          <span class="out">[MCP] 已连接 'time'，多了 2 个工具</span><br><br>
+          <span class="dim">你：</span>现在几点？<br>
+          <span class="dim">它：</span>[调用 <span style="color:#FB923C">mcp_time_…</span>]<br>
+          <span class="out">现在是 18:14:44，皇上。</span>
+        </div>
+      </div>
+      <div class="chip-row">
+        <span class="chip orange">不用写代码</span>
+        <span class="chip orange">配一行就行</span>
+        <span class="chip orange">接进来像自家厨具</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6: 结尾 ══ -->
+<div class="slide" id="s6">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow"></div></div>
+  <div class="wrap">
+    <div class="tag" style="margin-bottom:1.2vw">一句话收尾</div>
+    <div class="end-line">
+      <span class="t-tool">Tool</span> 是能执行的一台厨具，<span class="t-skill">Skill</span> 是知道怎么组合厨具的菜谱，<span class="t-mcp">MCP</span> 是手机线上接单；<br>真正决定先后顺序、何时调用、何时停手的，是 <span class="t-agent">Agent</span>。
+    </div>
+    <div class="next">// 下一期：Hooks —— 给 Agent 装个"监控探头" 🎬</div>
+    <div class="cta-row">
+      <div class="cta-btn">👍 点赞</div>
+      <div class="cta-btn">⭐ 收藏</div>
+      <div class="cta-btn">🔔 关注</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <div class="nav-btn" id="prev">&#8592;</div>
+  <div class="nav-dots" id="dots"></div>
+  <div class="nav-count" id="count">1 / 9</div>
+  <div class="nav-btn" id="next">&#8594;</div>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const dotsEl = document.getElementById('dots');
+const countEl = document.getElementById('count');
+let cur = 0;
+
+slides.forEach((_, i) => {
+  const d = document.createElement('div');
+  d.className = 'nav-dot' + (i === 0 ? ' on' : '');
+  d.onclick = () => go(i);
+  dotsEl.appendChild(d);
+});
+
+function go(n) {
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('on');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('on');
+  countEl.textContent = `${cur + 1} / ${slides.length}`;
+}
+
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('next').onclick = () => go(cur + 1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); }
+});
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) diff > 0 ? go(cur + 1) : go(cur - 1);
+});
+</script>
+</body>
+</html>
