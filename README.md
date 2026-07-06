@@ -8,6 +8,27 @@
 
 ---
 
+## 关注账号
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/readme/qrcode-bilibili-xiaodan-ai.jpg" alt="B 站账号二维码：小单说 AI" width="280" />
+      <br />
+      <strong>B 站：小单说 AI</strong>
+      <br />
+      UID: 1452412374
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/readme/qrcode-douyin-xiaodan-ai.jpg" alt="抖音账号二维码：小单说 AI" width="280" />
+      <br />
+      <strong>抖音：@小单说 AI</strong>
+      <br />
+      抖音号：23329202234
+    </td>
+  </tr>
+</table>
+
 ## 快速开始
 
 ```bash
@@ -34,7 +55,7 @@ templates/                 USER.md 与 compact_prompt.md 等记忆模板
 mcp_servers.json           step11 MCP server 配置，默认使用 .venv/bin/python
 ppt/                       课程 HTML/PPT 资料
 bilibili-transcripts/      前七期视频的带时间戳纠错转写稿
-assets/readme/             README 封面和图片资源
+assets/readme/             README 封面、二维码和图片资源
 ```
 
 根目录不再保留完整 `agent/` 运行时；教学代码保持单文件可读。`skills/`、`memory/`、`templates/` 是演示资源，不删除。
