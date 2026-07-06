@@ -1,6 +1,6 @@
 # s06: 多工具 + 动态技能 (Skills)
 
-`s01 > s02 > s03 > s04 | s05 > [ s06 ] | s07 > s08`
+`s01 > s02 > s03 > s04 | s05 > [ s06 ] > s07 | s08 > s09 > s10 > s11 > s12 > s13`
 
 > *"按需取知识"* —— 不把所有知识塞 system prompt, 让模型自己 load。
 >
@@ -88,4 +88,4 @@ python build-agent-example/code/step06_skills.py
 - `帮朕抓一下 https://example.com 的纯文本`
 - 在 `build-agent-example/code/skills/foo/SKILL.md` 写一份知识 (带 frontmatter), 重启程序, 问相关问题, 看模型是否主动调 `load_skill`。
 
-技能多到一定规模, 主 prompt 还是会胀 —— 那是 s08 子代理要处理的问题。
+技能让 Agent 能“按需加载知识”。下一步 s07 会把短期 history 沉淀到 `memory/`，让 Agent 有长期记忆。

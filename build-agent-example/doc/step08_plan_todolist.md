@@ -1,6 +1,6 @@
-# s07: 计划与 Todolist (Plan)
+# s08: 计划与 Todolist (Plan)
 
-`s01 > s02 > s03 > s04 | s05 > s06 | [ s07 ] s08`
+`s01 > s02 > s03 > s04 | s05 > s06 > s07 | [ s08 ] > s09 > s10 > s11 > s12 > s13`
 
 > *"先列清单, 再逐项执行"* —— 把"想清楚"显式化、可观测、可强约束。
 >
@@ -79,11 +79,11 @@ if message.stop_reason != "tool_use":
 - **全完成**: 打印最终清单后 `TODOS = []` 清空, 防止上一差事的计划状态串场到下一轮新差事。
 - **无 todolist 的简单问答**: 直接 `break`, 不受影响。
 
-完整代码: [code/step07_plan_todolist.py](../code/step07_plan_todolist.py)
+完整代码: [code/step08_plan_todolist.py](../code/step08_plan_todolist.py)
 
 ## 变更内容
 
-| 组件                | 之前 (s06)        | 之后 (s07)                              |
+| 组件                | 之前 (s07)        | 之后 (s08)                              |
 |---------------------|-------------------|-----------------------------------------|
 | 工具数              | 3                 | 4 (新增 `update_todos`)                 |
 | 任务状态            | 隐式 (在模型脑里) | 显式 (内存 list + 终端可视化)           |
@@ -94,7 +94,7 @@ if message.stop_reason != "tool_use":
 ## 试一试
 
 ```sh
-python build-agent-example/code/step07_plan_todolist.py
+python build-agent-example/code/step08_plan_todolist.py
 ```
 
 - `创建一个 demo 项目: 新建目录 demo, 在里面写 README.md 和一个能跑的 hello.py, 跑通后告诉朕结果`
@@ -102,4 +102,4 @@ python build-agent-example/code/step07_plan_todolist.py
 
 观察终端: 先打印 `[计划已更新]` 给出 todo 清单 → 逐项 `[~]` → `[x]` → 回答结束时若仍有未完项, 看到 `[计划尚未办妥, 继续执行...]` 然后模型自动续跑; 全部 `[x]` 时打印 `[最终计划状态 - 全部办妥]`, `TODOS` 立刻清空, 下一轮从空白开始。
 
-模型现在会规划了, 但执行细节 (大量工具输出) 仍然全部进了主 history。这是 s08 要处理的事。
+模型现在会规划了, 但执行细节 (大量工具输出) 仍然全部进了主 history。这是 s09 要处理的事。

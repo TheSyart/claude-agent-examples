@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import subprocess
@@ -5,6 +6,7 @@ import urllib.request
 import yaml
 import anthropic
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from html.parser import HTMLParser
 from pathlib import Path
 from dotenv import load_dotenv
@@ -15,8 +17,12 @@ client = anthropic.Anthropic(
     base_url=os.environ["ANTHROPIC_BASE_URL"],
 )
 
-SKILLS_DIR = Path(__file__).parent / "skills"
 MODEL = os.environ["ANTHROPIC_MODEL"]
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SKILLS_DIR = PROJECT_ROOT / "skills"
+MEMORY_DIR = PROJECT_ROOT / "memory"
+TEMPLATES_DIR = PROJECT_ROOT / "templates"
 
 class SkillLoader:
     def __init__(self, skills_dir: Path):
@@ -64,6 +70,62 @@ class SkillLoader:
 
 SKILL_LOADER = SkillLoader(SKILLS_DIR)
 
+
+class MemoryStore:
+    def __init__(self, memory_dir: Path, templates_dir: Path):
+        self.memory_dir = memory_dir
+        self.memory_file = memory_dir / "MEMORY.md"
+        self.history_file = memory_dir / "history.jsonl"
+        self.user_file = templates_dir / "USER.md"
+
+    def ensure_files(self):
+        self.memory_dir.mkdir(parents=True, exist_ok=True)
+        self.user_file.parent.mkdir(parents=True, exist_ok=True)
+        if not self.memory_file.exists():
+            self.memory_file.write_text("# Long-term Memory\n\n", encoding="utf-8")
+        if not self.user_file.exists():
+            self.user_file.write_text("# User Profile\n\n", encoding="utf-8")
+        if not self.history_file.exists():
+            self.history_file.touch()
+
+    def append_history(self, message: dict):
+        self.ensure_files()
+        record = {
+            "ts": datetime.now().isoformat(timespec="seconds"),
+            "role": message.get("role"),
+            "content": _json_safe(message.get("content")),
+        }
+        with self.history_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    def read_memory(self) -> str:
+        self.ensure_files()
+        return self.memory_file.read_text(encoding="utf-8")
+
+    def read_user(self) -> str:
+        self.ensure_files()
+        return self.user_file.read_text(encoding="utf-8")
+
+    def read_today_episode(self) -> str:
+        self.ensure_files()
+        path = self.memory_dir / f"{datetime.now():%Y-%m-%d}.md"
+        return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+MEMORY = MemoryStore(MEMORY_DIR, TEMPLATES_DIR)
+
+
+def _json_safe(value):
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, list):
+        return [_json_safe(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _json_safe(v) for k, v in value.items()}
+    if hasattr(value, "model_dump"):
+        return _json_safe(value.model_dump())
+    return str(value)
+
 class _TextExtractor(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -105,7 +167,7 @@ def web_fetch(url: str, extract_mode: str = "text", max_chars: int = 8000) -> st
     return text[:max_chars]
 
 
-# ============== TodoList 计划与执行（沿用 agent7） ==============
+# ============== TodoList 计划与执行（沿用 s08） ==============
 TODOS: list[dict] = []
 VALID_STATUS = {"pending", "in_progress", "completed"}
 STATUS_ICON = {"pending": "[ ]", "in_progress": "[~]", "completed": "[x]"}
@@ -423,7 +485,11 @@ def run_subagent(task: str, agent_type: str = "neiguan_yingzao",
 
 
 # ============== 主 agent ==============
-SYSTEM_PROMPT = f"""
+def build_system_prompt() -> str:
+    memory = MEMORY.read_memory()
+    user_profile = MEMORY.read_user()
+    today_episode = MEMORY.read_today_episode()
+    return f"""
 你是大内太监总管，侍奉皇上多年，忠心耿耿。
 说话风格符合古代宫廷太监，语气恭敬谦卑。
 你必须尊称用户为皇上。
@@ -449,6 +515,15 @@ SYSTEM_PROMPT = f"""
 - dongchang_tanshi（东厂探事小太监）：只读查访，适合抓网页、查资料、探索性搜索。
 - shangbao_dianbu（尚宝监典簿小太监）：只读核验，适合盘点文件、校对清单、检查遗漏。
 - neiguan_yingzao（内官监营造小太监）：可读写可执行，适合修改文件、搭建工程、落地实现。
+
+【长期记忆 MEMORY.md】
+{memory}
+
+【用户画像 USER.md】
+{user_profile}
+
+【今日情景记忆】
+{today_episode or "(今天还没有压缩出的情景记忆)"}
 
 当前可用技能：
 {SKILL_LOADER.get_descriptions()}"""
@@ -525,18 +600,22 @@ history = []
 while True:
     user_input = input("你: ")
 
-    history.append({"role": "user", "content": user_input})
+    user_message = {"role": "user", "content": user_input}
+    history.append(user_message)
+    MEMORY.append_history(user_message)
 
     while True:
         message = client.messages.create(
             model=MODEL,
             max_tokens=20000,
-            system=SYSTEM_PROMPT,
+            system=build_system_prompt(),
             tools=TOOLS,
             messages=history
         )
 
-        history.append({"role": "assistant", "content": message.content})
+        assistant_message = {"role": "assistant", "content": message.content}
+        history.append(assistant_message)
+        MEMORY.append_history(assistant_message)
 
         if message.stop_reason != "tool_use":
             reply = next((b.text for b in message.content if b.type == "text"), "")
@@ -547,13 +626,15 @@ while True:
                     print("[计划尚未办妥，继续执行...]")
                     print(render_todos(TODOS))
                     print()
-                    history.append({
+                    reminder_message = {
                         "role": "user",
                         "content": (
                             "差事尚未办妥，以下任务仍未完成，请按计划继续执行，"
                             "并按规矩更新 todolist 状态：\n" + render_todos(TODOS)
                         )
-                    })
+                    }
+                    history.append(reminder_message)
+                    MEMORY.append_history(reminder_message)
                     continue
                 print("[最终计划状态 - 全部办妥]")
                 print(render_todos(TODOS))
@@ -607,4 +688,6 @@ while True:
             {"type": "tool_result", "tool_use_id": b.id, "content": results_map[b.id]}
             for b in tool_blocks
         ]
-        history.append({"role": "user", "content": tool_results})
+        tool_message = {"role": "user", "content": tool_results}
+        history.append(tool_message)
+        MEMORY.append_history(tool_message)

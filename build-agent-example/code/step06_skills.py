@@ -15,7 +15,8 @@ client = anthropic.Anthropic(
 )
 MODEL = os.environ["ANTHROPIC_MODEL"]
 
-SKILLS_DIR = Path(__file__).parent / "skills"
+ROOT = Path(__file__).resolve().parents[2]
+SKILLS_DIR = ROOT / "skills"
 
 class SkillLoader:
     def __init__(self, skills_dir: Path):

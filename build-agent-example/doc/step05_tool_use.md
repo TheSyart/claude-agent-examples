@@ -1,6 +1,6 @@
 # s05: 工具调用 (Tool Use) —— 真正的 Agent 循环
 
-`s01 > s02 > s03 > s04 | [ s05 ] s06 | s07 > s08`
+`s01 > s02 > s03 > s04 | [ s05 ] > s06 > s07 | s08 > s09 > s10 > s11 > s12 > s13`
 
 > *"One loop & Bash is all you need"* —— 一个工具 + 一个循环 = 一个 Agent。
 >

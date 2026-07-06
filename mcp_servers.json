@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "time": {
+      "enabled": true,
+      "command": ".venv/bin/python",
+      "args": ["build-agent-example/mcp_server_time.py"]
+    }
+  }
+}
