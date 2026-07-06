@@ -6,29 +6,6 @@
 
 配套资料包括 [ppt/](ppt/) 讲解页、[bilibili-transcripts/](bilibili-transcripts/) 视频转写稿，以及 `skills/`、`memory/`、`templates/` 演示资源。
 
----
-
-## 关注账号
-
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="assets/readme/qrcode-bilibili-xiaodan-ai.jpg" alt="B 站账号二维码：小单说 AI" width="280" />
-      <br />
-      <strong>B 站：小单说 AI</strong>
-      <br />
-      UID: 1452412374
-    </td>
-    <td align="center" width="50%">
-      <img src="assets/readme/qrcode-douyin-xiaodan-ai.jpg" alt="抖音账号二维码：小单说 AI" width="280" />
-      <br />
-      <strong>抖音：@小单说 AI</strong>
-      <br />
-      抖音号：23329202234
-    </td>
-  </tr>
-</table>
-
 ## 快速开始
 
 ```bash
@@ -126,3 +103,24 @@ step07 以后会读取并写入这些文件：
 - [第五期：子代理实现](bilibili-transcripts/05-子代理实现.txt)
 - [第六期：Agent Team 团队协作](bilibili-transcripts/06-Agent-Team团队协作.txt)
 - [第七期：MCP、Skill、Tool](bilibili-transcripts/07-MCP-Skill-Tool.txt)
+
+## 关注账号
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="assets/readme/qrcode-bilibili-xiaodan-ai.jpg" alt="B 站账号二维码：小单说 AI" width="280" />
+      <br />
+      <strong>B 站：小单说 AI</strong>
+      <br />
+      UID: 1452412374
+    </td>
+    <td align="center" width="50%">
+      <img src="assets/readme/qrcode-douyin-xiaodan-ai.jpg" alt="抖音账号二维码：小单说 AI" width="280" />
+      <br />
+      <strong>抖音：@小单说 AI</strong>
+      <br />
+      抖音号：23329202234
+    </td>
+  </tr>
+</table>
