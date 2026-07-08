@@ -9,3 +9,4 @@ __pycache__/
 memory/
 .team/
 build-agent-example/code/.team/
+.hooks_audit.jsonl

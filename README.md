@@ -2,9 +2,30 @@
 
 # Claude Agent 教学示例
 
-用 Python 从零构建 AI Agent。项目核心是 [build-agent-example/](build-agent-example/)：从一次模型调用开始，后续每一步都保留前一步的全部代码和能力，逐步加入循环、history、system prompt、工具、skills、memory、规划、子代理、团队协作、MCP、hooks 和 goal。
+<p align="center">
+  <img src="assets/readme/emperoragent-wordmark.png" alt="Emperor Agent" width="560" />
+</p>
+
+用 Python 从零构建 AI Agent。项目核心是 [build-agent-example/](build-agent-example/)：从一次模型调用开始，后续每一步都保留前一步的全部代码和能力，逐步加入循环、history、system prompt、工具、skills、memory、规划、子代理、团队协作、MCP 和 hooks。
 
 配套资料包括 [ppt/](ppt/) 讲解页、[bilibili-transcripts/](bilibili-transcripts/) 视频转写稿，以及 `skills/`、`memory/`、`templates/` 演示资源。
+
+## Emperor Agent 是什么
+
+Emperor Agent 是这套课程贯穿始终的演示 Agent 人设：用户是“皇上”，Agent 是“大内太监总管”，回答以“奉天承运皇帝诏曰”开头。
+
+它不是额外的完整框架，也不是根目录里的独立 Agent 运行时，而是 `build-agent-example/code/` 里一步步堆叠出来的教学主角：
+
+- 从 `step04_system_prompt.py` 开始有宫廷人设和稳定 system prompt；
+- 从 `step05_tool_use.py` 开始能真实调用工具办差；
+- 从 `step06_skills.py` 开始能按需加载技能；
+- 从 `step07_memory_system.py` 开始有长期记忆和用户画像；
+- 从 `step09_subagent.py` 开始能派“小太监”子代理；
+- 从 `step10_agent_team.py` 开始有固定队友和 inbox；
+- 从 `step11_mcp.py` 开始接入外部 MCP 工具；
+- 从 `step12_hooks.py` 开始在关键流程边界加入 Hooks 检查点。
+
+所以这个项目真正演示的是：一个有角色、有工具、有记忆、有团队、有外部工具协议、有运行时检查点的 Emperor Agent，是如何从最小模型调用一步步长出来的。
 
 ## 快速开始
 
@@ -22,8 +43,8 @@ python build-agent-example/code/step01_single_call.py
 
 ```text
 build-agent-example/
-├── code/                  step01-step13 教学代码
-├── doc/                   step01-step13 同名讲解文档，统一教学结构
+├── code/                  step01-step12 教学代码
+├── doc/                   step01-step12 同名讲解文档，统一教学结构
 └── mcp_server_time.py     step11 MCP 本地 time server
 
 skills/                    skill 演示资源，供 step06+ 读取
@@ -39,9 +60,9 @@ assets/readme/             README 封面、二维码和图片资源
 
 ## 教学主线
 
-`build-agent-example/code/step01` 到 `step13` 采用严格累积写法：后一步保留前一步的全部核心代码和能力，只在此基础上新增一个主题能力。也就是说，`step11 = step10 + MCP`，`step12 = step11 + Hooks`，`step13 = step12 + Goal`。
+`build-agent-example/code/step01` 到 `step12` 采用严格累积写法：后一步保留前一步的全部核心代码和能力，只在此基础上新增一个主题能力。也就是说，`step11 = step10 + MCP`，`step12 = step11 + Hooks`。
 
-`build-agent-example/doc/step01` 到 `step13` 采用统一结构：问题、解决方案、工作原理、变更内容、试一试，便于按期阅读和录课。
+`build-agent-example/doc/step01` 到 `step12` 采用统一结构：问题、解决方案、工作原理、变更内容、试一试，便于按期阅读和录课。
 
 | 步骤 | 代码 | 文档 | 能力 | 新增概念 |
 |------|------|------|------|----------|
@@ -57,7 +78,6 @@ assets/readme/             README 封面、二维码和图片资源
 | 10 | [step10_agent_team.py](build-agent-example/code/step10_agent_team.py) | [doc](build-agent-example/doc/step10_agent_team.md) | Agent Team | 持久队友 + inbox + team 状态 |
 | 11 | [step11_mcp.py](build-agent-example/code/step11_mcp.py) | [doc](build-agent-example/doc/step11_mcp.md) | MCP | 外部工具服务器 + stdio transport |
 | 12 | [step12_hooks.py](build-agent-example/code/step12_hooks.py) | [doc](build-agent-example/doc/step12_hooks.md) | Hooks | Before/After 拦截、改写、审计 |
-| 13 | [step13_goal.py](build-agent-example/code/step13_goal.py) | [doc](build-agent-example/doc/step13_goal.md) | Goal | 目标树 + 自主循环 + 完成判定 |
 | 附录 | [sp_mcp-skill-tool.py](build-agent-example/code/sp_mcp-skill-tool.py) | [doc](build-agent-example/doc/sp_mcp-skill-tool.md) | MCP × Skill × Tool | MCP 接单、Skill 加载 SOP、Tool 执行 |
 
 ## 记忆资源
@@ -90,7 +110,6 @@ step07 以后会读取并写入这些文件：
 - [第六期：Agent Team 团队协作](ppt/第六期-agent团队协作.html)
 - [第七期：Tool / Skill / MCP 三者辨析](ppt/第七期-tool-skill-mcp.html)
 - [第八期：Hooks 生命周期](ppt/第八期-hooks生命周期.html)
-- [第九期：目标驱动 Agent](ppt/第九期-目标驱动agent.html)
 
 ## 视频转写稿
 

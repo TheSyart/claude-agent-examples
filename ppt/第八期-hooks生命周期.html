@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>第八期:Hooks生命周期</title>
+<title>第八期：Hooks 生命周期</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:'IBM Plex Sans','PingFang SC',sans-serif;color:#E2E8F0}
 .deck{position:relative;width:100%;height:100%;overflow:hidden}
@@ -23,473 +22,539 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 
 .bg{position:absolute;inset:0;pointer-events:none}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(34,197,94,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.03) 1px,transparent 1px);background-size:5vw 5vw}
-.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#4ADE80 40%,#6366F1 70%,#8B5CF6);z-index:50}
+.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#22D3EE 40%,#6366F1 70%,#FB923C);z-index:50}
 .glow-l{position:absolute;width:55vw;height:100%;background:radial-gradient(ellipse at left center,rgba(34,197,94,.08) 0%,transparent 60%)}
-.glow-r{position:absolute;width:35vw;height:65%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 65%)}
-.glow-c{position:absolute;width:50vw;height:80vh;top:10%;left:25%;background:radial-gradient(ellipse,rgba(34,197,94,.07) 0%,transparent 65%)}
-.glow-o{position:absolute;width:34vw;height:62vh;right:6%;top:18%;background:radial-gradient(ellipse,rgba(251,146,60,.07) 0%,transparent 68%)}
+.glow-r{position:absolute;width:34vw;height:65%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(251,146,60,.07) 0%,transparent 65%)}
+.glow-c{position:absolute;width:60vw;height:80vh;top:10%;left:20%;background:radial-gradient(ellipse,rgba(99,102,241,.06) 0%,transparent 65%)}
+.glow-g{position:absolute;width:58vw;height:80vh;top:10%;left:5%;background:radial-gradient(ellipse,rgba(34,197,94,.07) 0%,transparent 65%)}
+.glow-o{position:absolute;width:55vw;height:80vh;top:12%;left:25%;background:radial-gradient(ellipse,rgba(251,146,60,.06) 0%,transparent 65%)}
 
 .page-id{position:absolute;top:1.8vw;left:3vw;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#1E3A2A;z-index:20}
 .page-id span{color:#22C55E}
-.tag{font-family:'JetBrains Mono',monospace;font-size:.72vw;letter-spacing:0;color:#22C55E;margin-bottom:.8vw}
-.h-main{font-size:3.35vw;font-weight:900;letter-spacing:0;line-height:1.05;color:#F8FAFC;margin-bottom:.6vw}
-.h-main em{font-style:normal;background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.desc{font-size:.92vw;color:#64748B;line-height:1.7;margin-bottom:1.5vw;text-wrap:pretty}
-.file{font-family:'JetBrains Mono',monospace;color:#FB923C}
-.mono{font-family:'JetBrains Mono',monospace}
-
-.chip{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:0;color:#22C55E;margin-bottom:1.4vw}
-.chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E;animation:blink 1.8s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
-
-.badge-g,.badge-i,.badge-o,.badge-dim{font-family:'JetBrains Mono',monospace;font-size:.62vw;font-weight:700;padding:.2vw .5vw;border-radius:.3vw;letter-spacing:0;display:inline-block}
-.badge-g{background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2)}
-.badge-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
-.badge-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.25)}
-.badge-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.06)}
-
-.two-col{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1fr;padding:4vw 4vw 3vw;gap:3vw}
-.two-col.wide-r{grid-template-columns:.86fr 1.14fr}
-.two-col.wide-l{grid-template-columns:1.12fr .88fr}
-.col{display:flex;flex-direction:column;justify-content:center}
-.col.gap{gap:.8vw}
-
-.info-row{display:flex;align-items:flex-start;gap:1vw;padding:.8vw 1vw;border:1px solid rgba(255,255,255,.05);border-radius:.5vw;background:rgba(255,255,255,.015);margin-bottom:.5vw}
-.info-row.hi{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
-.info-row.hi2{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
-.info-row.hi3{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.03)}
-.info-icon{width:2vw;height:2vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;border:1px solid rgba(255,255,255,.08);color:#475569;background:rgba(255,255,255,.04)}
-.info-row.hi .info-icon{background:rgba(34,197,94,.12);color:#22C55E;border-color:rgba(34,197,94,.3);box-shadow:0 0 .8vw rgba(34,197,94,.12)}
-.info-row.hi2 .info-icon{background:rgba(99,102,241,.12);color:#818CF8;border-color:rgba(99,102,241,.3)}
-.info-row.hi3 .info-icon{background:rgba(251,146,60,.1);color:#FB923C;border-color:rgba(251,146,60,.25)}
-.info-name{font-size:.9vw;font-weight:700;color:#94A3B8;margin-bottom:.15vw}
-.info-row.hi .info-name,.info-row.hi2 .info-name,.info-row.hi3 .info-name{color:#E2E8F0}
-.info-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#1E3A2A;line-height:1.55}
-.info-row.hi .info-sub{color:#1E5C2A}.info-row.hi2 .info-sub{color:#3730A3}.info-row.hi3 .info-sub{color:#7C3A11}
-
-.code-card{background:#020810;border:1px solid rgba(255,255,255,.06);border-radius:.7vw;overflow:hidden}
-.code-card.green{border-color:rgba(34,197,94,.2)}.code-card.ind{border-color:rgba(99,102,241,.22)}.code-card.orange{border-color:rgba(251,146,60,.22)}
-.code-card.compact .c-body{font-size:.68vw;line-height:1.68}
-.code-card.micro .c-body{font-size:.63vw;line-height:1.6}
-.c-head{padding:.6vw 1vw;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between}
-.c-label{font-family:'JetBrains Mono',monospace;font-size:.65vw;color:#334155}.c-label.g{color:#22C55E}.c-label.i{color:#818CF8}.c-label.o{color:#FB923C}
-.dots{display:flex;gap:.4vw}.dot{width:.65vw;height:.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
-.c-body{padding:.9vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.78}
-.ln{color:#1E3A2A;margin-right:.8vw;font-size:.7vw;user-select:none}
-.kw{color:#6366F1}.fn{color:#22C55E}.st{color:#FB923C}.cm{color:#1E3A2A;font-style:italic}.va{color:#E2E8F0}.prop{color:#93C5FD}.num{color:#FBBF24}
-.hl{background:rgba(34,197,94,.06);border-left:2px solid #22C55E;display:block;padding-left:.4vw;margin-left:-.4vw;border-radius:0 3px 3px 0}
-
-.flow-col{display:flex;flex-direction:column}
-.frow{display:flex;align-items:stretch;gap:.8vw}
-.frow-left{display:flex;flex-direction:column;align-items:center;width:2.2vw;flex-shrink:0}
-.frow-icon{width:2.2vw;height:2.2vw;border-radius:.4vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;flex-shrink:0}
-.frow-line{flex:1;width:1px;margin:.2vw 0}
-.fi-g{background:rgba(34,197,94,.12);color:#22C55E;border:1px solid rgba(34,197,94,.25)}
-.fi-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
-.fi-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.2)}
-.fi-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.08)}
-.fl-g{background:rgba(34,197,94,.2)}.fl-i{background:rgba(99,102,241,.2)}.fl-dim{background:rgba(255,255,255,.06)}
-.frow-body{flex:1;padding:.6vw 0;display:flex;flex-direction:column;justify-content:center}
-.frow-name{font-size:.88vw;font-weight:700;color:#E2E8F0;margin-bottom:.15vw}.frow-name.dim{color:#64748B}
-.frow-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#22613A;line-height:1.55}.frow-sub.dim{color:#1A2E1E}
-
-.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:1vw;width:100%}
-.mod-card{border-radius:.6vw;padding:1.1vw 1.3vw;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015)}
-.mod-card.g{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
-.mod-card.i{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
-.mod-card.o{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.04)}
-.mod-card.s{border-color:rgba(34,211,238,.2);background:rgba(34,211,238,.04)}
-.mod-file{font-family:'JetBrains Mono',monospace;font-size:.6vw;letter-spacing:0;color:#334155;margin-bottom:.35vw;text-transform:uppercase}
-.mod-name{font-size:.95vw;font-weight:700;color:#E2E8F0;margin-bottom:.55vw}
-.mod-card.g .mod-name{color:#4ADE80}.mod-card.i .mod-name{color:#818CF8}.mod-card.o .mod-name{color:#FB923C}.mod-card.s .mod-name{color:#22D3EE}
-.mod-sub{font-size:.72vw;color:#64748B;line-height:1.6}
-
-.terminal{background:#020810;border:1px solid rgba(34,197,94,.18);border-radius:.7vw;overflow:hidden;box-shadow:0 0 3vw rgba(34,197,94,.06)}
-.term-bar{display:flex;align-items:center;gap:.5vw;padding:.7vw 1vw;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05)}
-.term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#334555}
-.term-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.95;color:#64748B}
+.tag{font-family:'JetBrains Mono',monospace;font-size:.72vw;letter-spacing:.14em;color:#22C55E;margin-bottom:.8vw}
+.desc{font-size:.95vw;color:#64748B;line-height:1.7;margin-bottom:1.35vw;text-wrap:pretty}
+.h-big{font-size:3.2vw;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#F8FAFC}
+.h-mid{font-size:2.45vw;font-weight:900;letter-spacing:-.02em;line-height:1.12;color:#F8FAFC}
+.grad-g{background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-c{background:linear-gradient(120deg,#22D3EE,#67E8F9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-o{background:linear-gradient(120deg,#FB923C,#FDBA74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.t-g{color:#22C55E}.t-c{color:#22D3EE}.t-o{color:#FB923C}.t-i{color:#818CF8}
+.chip-row{display:flex;flex-wrap:wrap;gap:.6vw;margin-top:1vw}
+.chip{font-family:'JetBrains Mono',monospace;font-size:.72vw;padding:.3vw .8vw;border-radius:999px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#22C55E}
+.chip.cyan{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.08);color:#22D3EE}
+.chip.orange{border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.08);color:#FB923C}
+.note-box{display:flex;align-items:flex-start;gap:.8vw;padding:.9vw 1.1vw;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.18);border-radius:.5vw;border-left:3px solid #22C55E}
+.note-icon{font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;color:#22C55E;flex-shrink:0;margin-top:.1vw}
+.note-text{font-size:.86vw;color:#4B6741;line-height:1.6}
+.note-text strong{color:#22C55E}
+.dot{width:.65vw;height:.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
+.terminal,.code-card{background:#020810;border:1px solid rgba(34,197,94,.18);border-radius:.7vw;overflow:hidden;box-shadow:0 0 3vw rgba(34,197,94,.06)}
+.term-bar,.c-head{display:flex;align-items:center;gap:.5vw;padding:.7vw 1vw;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05)}
+.term-title,.c-label{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#334155}
+.term-body,.c-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;line-height:1.95;color:#64748B}
 .prompt{color:#22C55E}.out{color:#94A3B8}.warn{color:#FB923C}.dim{color:#334155}
+.art-card{position:relative;border-radius:.72vw;overflow:hidden;border:1px solid rgba(255,255,255,.07);background:#020810;box-shadow:0 0 3vw rgba(34,197,94,.055)}
+.art-card img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(1.04) contrast(1.04)}
+.art-card:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,11,20,.18),transparent 45%,rgba(5,11,20,.16));pointer-events:none}
 
-.cover-wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 26vw}
-.cover-left{display:flex;flex-direction:column;justify-content:center;padding:3.5vw 3vw 3.5vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
-.cover-title{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;color:#F8FAFC;margin-bottom:.4vw}
-.cover-green{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.35vw}
-.cover-right{display:flex;flex-direction:column;justify-content:center;padding:3vw 2.5vw}
-.footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.7vw;color:#1E3A2A;z-index:20}
-.footer span{color:#166534}
+/* cover */
+#s0 .wrap{position:relative;z-index:10;display:grid;grid-template-columns:1fr 30vw;height:100%}
+#s0 .left{display:flex;flex-direction:column;justify-content:center;padding:4vw 3vw 4vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
+#s0 .chip-top{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:.12em;color:#22C55E;margin-bottom:1.6vw}
+#s0 .chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E}
+#s0.slide.active .chip-dot{animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
+#s0 .h1{font-size:4.45vw;font-weight:900;line-height:1.02;letter-spacing:-.03em;color:#F8FAFC;margin-bottom:.5vw}
+#s0 .h1 .a{color:#22C55E}#s0 .h1 .b{color:#22D3EE}#s0 .h1 .sep{color:#1E3A2A}
+#s0 .subtitle{font-size:1.05vw;color:#4B6741;margin-bottom:2.2vw;font-family:'JetBrains Mono',monospace}
+#s0 .terminal{max-width:40vw}
+#s0 .term-body{font-size:.9vw;line-height:2}
+#s0 .cursor{display:inline-block;width:.6vw;height:1.1vw;background:#22C55E;margin-left:2px;vertical-align:middle}
+#s0.slide.active .cursor{animation:cur 1.1s step-end infinite}
+@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
+#s0 .right{display:flex;flex-direction:column;justify-content:center;padding:3vw 3vw 3vw 2.5vw}
+#s0 .sec-label{font-family:'JetBrains Mono',monospace;font-size:.68vw;letter-spacing:.16em;color:#1E3A2A;margin-bottom:1.4vw}
+#s0 .step{display:flex;align-items:center;gap:1vw;padding:.8vw 1.1vw;border-radius:.5vw;margin-bottom:.6vw;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.015)}
+#s0 .step.g{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.05)}
+#s0 .step.c{border-color:rgba(34,211,238,.28);background:rgba(34,211,238,.05)}
+#s0 .step.o{border-color:rgba(251,146,60,.28);background:rgba(251,146,60,.05)}
+#s0 .ico{width:2.2vw;height:2.2vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.8vw;font-weight:700}
+#s0 .step.g .ico{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#22C55E}
+#s0 .step.c .ico{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);color:#22D3EE}
+#s0 .step.o .ico{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3);color:#FB923C}
+#s0 .sname{font-size:1vw;font-weight:700;color:#E2E8F0;line-height:1.1;margin-bottom:.2vw}
+#s0 .shint{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#475569}
+#s0 .footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;align-items:center;justify-content:space-between;z-index:20;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#0F2A18}
+#s0 .footer span{color:#166534}
+
+/* S1 hook metaphor */
+#s1 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.9fr 1.1fr;padding:4vw 4vw 3vw;gap:3vw}
+#s1 .left,#s1 .right{display:flex;flex-direction:column;justify-content:center}
+#s1 .art-card{height:24vw;border-color:rgba(34,211,238,.18)}
+.map-pair{display:grid;grid-template-columns:1fr 1fr;gap:.9vw;margin-top:1vw}
+.map-card{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);border-radius:.65vw;padding:1vw}
+.map-card b{display:block;font-size:.98vw;color:#E2E8F0;margin-bottom:.35vw}
+.map-card span{font-size:.78vw;line-height:1.55;color:#64748B}
+.hook-strip{display:flex;gap:.75vw;margin-top:1vw}
+.hook-tag{flex:1;text-align:center;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.07);border-radius:.5vw;padding:.65vw .5vw;font-family:'JetBrains Mono',monospace;font-size:.66vw;color:#86EFAC}
+
+/* S2 agent hooks */
+#s2 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.95fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s2 .left,#s2 .right{display:flex;flex-direction:column;justify-content:center}
+#s2 .art-card{height:19vw;border-color:rgba(34,197,94,.2);margin-bottom:1vw}
+.station-list{display:flex;flex-direction:column;gap:.65vw;margin-top:.2vw}
+.station{display:grid;grid-template-columns:2.2vw 1fr auto;align-items:center;gap:.8vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018);border-radius:.55vw;padding:.62vw .78vw}
+.st-no{width:2.2vw;height:2.2vw;border-radius:.42vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#22C55E;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25)}
+.st-name{font-size:.82vw;font-weight:800;color:#E2E8F0}.st-sub{font-family:'JetBrains Mono',monospace;font-size:.56vw;color:#475569;margin-top:.12vw}
+.st-hook{font-family:'JetBrains Mono',monospace;font-size:.58vw;border:1px solid rgba(34,211,238,.25);border-radius:999px;padding:.18vw .48vw;color:#22D3EE;background:rgba(34,211,238,.06)}
+
+/* S3 build skeleton */
+#s3 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+.build-grid{display:grid;grid-template-columns:1fr .3fr 1fr .3fr 1fr;gap:.8vw;align-items:center;width:100%;max-width:82vw;margin-top:1.5vw}
+.build-card{min-height:13vw;border-radius:.8vw;padding:1.35vw;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
+.build-card.g{border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.045)}
+.build-card.c{border-color:rgba(34,211,238,.34);background:rgba(34,211,238,.045)}
+.build-card.o{border-color:rgba(251,146,60,.34);background:rgba(251,146,60,.045)}
+.build-label{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#475569;margin-bottom:.65vw}
+.build-title{font-size:1.4vw;font-weight:900;color:#E2E8F0;margin-bottom:.5vw}
+.build-card.g .build-title{color:#22C55E}.build-card.c .build-title{color:#22D3EE}.build-card.o .build-title{color:#FB923C}
+.build-copy{font-size:.82vw;color:#64748B;line-height:1.6}
+.build-arrow{font-size:1.3vw;color:#1E3A2A;text-align:center}
+.tiny-code{font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#94A3B8;background:#020810;border:1px solid rgba(255,255,255,.06);border-radius:.45vw;padding:.55vw .7vw;margin-top:.85vw}
+
+/* S4 trigger points */
+#s4 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.9fr 1.1fr;padding:4vw 4vw 3vw;gap:3vw}
+#s4 .left,#s4 .right{display:flex;flex-direction:column;justify-content:center}
+.metro-line{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:.7vw;padding:2.5vw 1vw 1.1vw;border:1px solid rgba(255,255,255,.06);border-radius:.8vw;background:rgba(255,255,255,.018);margin-top:.9vw}
+.metro-line:before{content:"";position:absolute;left:2vw;right:2vw;top:2vw;height:2px;background:linear-gradient(90deg,#22C55E,#22D3EE,#FB923C,#818CF8)}
+.metro-station{position:relative;text-align:center;border:1px solid rgba(34,197,94,.18);border-radius:.55vw;padding:1.4vw .55vw .75vw;background:rgba(2,8,16,.62)}
+.metro-station:before{content:"";position:absolute;left:50%;top:-1.04vw;transform:translateX(-50%);width:1.2vw;height:1.2vw;border-radius:50%;background:#020810;border:1px solid rgba(34,197,94,.4);box-shadow:0 0 1vw rgba(34,197,94,.18)}
+.metro-name{font-size:.8vw;font-weight:800;color:#E2E8F0;margin-bottom:.2vw}.metro-sub{font-family:'JetBrains Mono',monospace;font-size:.55vw;color:#64748B;line-height:1.35}
+#s4.slide.active .metro-station:before{animation:stationpulse 3.2s ease-in-out infinite}
+#s4.slide.active .metro-station:nth-child(2):before{animation-delay:.25s}#s4.slide.active .metro-station:nth-child(3):before{animation-delay:.5s}#s4.slide.active .metro-station:nth-child(4):before{animation-delay:.75s}
+@keyframes stationpulse{0%,100%{box-shadow:0 0 .3vw rgba(34,197,94,.08)}50%{box-shadow:0 0 1.4vw rgba(34,197,94,.3)}}
+.trigger-list{display:flex;flex-direction:column;gap:.65vw;margin-top:.8vw}
+.trigger{display:grid;grid-template-columns:2.15vw 1fr;gap:.75vw;align-items:center;padding:.7vw .85vw;border-radius:.55vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018)}
+.trigger-key{width:2.15vw;height:2.15vw;border-radius:.4vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.6vw;color:#22C55E;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08)}
+.trigger b{display:block;font-size:.82vw;color:#E2E8F0}.trigger span{font-family:'JetBrains Mono',monospace;font-size:.56vw;color:#475569}
+
+/* S5 execution structure */
+#s5 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.95fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s5 .left,#s5 .right{display:flex;flex-direction:column;justify-content:center}
+.question-flow{display:grid;grid-template-columns:1fr .25fr 1fr .25fr 1fr;align-items:stretch;gap:.55vw;margin-top:1.2vw}
+.qcard{border-radius:.7vw;padding:1.1vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);min-height:8.3vw}
+.qcard.g{border-color:rgba(34,197,94,.33);background:rgba(34,197,94,.045)}
+.qcard.c{border-color:rgba(34,211,238,.33);background:rgba(34,211,238,.045)}
+.qcard.o{border-color:rgba(251,146,60,.33);background:rgba(251,146,60,.045)}
+.qhead{font-size:1.05vw;font-weight:900;color:#E2E8F0;margin-bottom:.45vw}
+.qcard.g .qhead{color:#22C55E}.qcard.c .qhead{color:#22D3EE}.qcard.o .qhead{color:#FB923C}
+.qcopy{font-size:.76vw;color:#64748B;line-height:1.55}.qterm{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#94A3B8;margin-top:.55vw}
+.decision-list{display:grid;grid-template-columns:repeat(2,1fr);gap:.75vw;margin-top:.9vw}
+.decision{border-radius:.55vw;padding:.75vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018)}
+.decision b{font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#22C55E}.decision span{display:block;font-size:.68vw;color:#64748B;line-height:1.45;margin-top:.24vw}
+
+/* S6 demos */
+#s6 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s6 .left,#s6 .right{display:flex;flex-direction:column;justify-content:center}
+#s6 .terminal{border-color:rgba(251,146,60,.2);box-shadow:0 0 3vw rgba(251,146,60,.05)}
+.demo-rail{display:flex;flex-direction:column;gap:.55vw;margin-top:.9vw}
+.demo-step{display:grid;grid-template-columns:2.2vw 1fr 5vw;gap:.75vw;align-items:center;padding:.66vw .75vw;border:1px solid rgba(255,255,255,.07);border-radius:.55vw;background:rgba(255,255,255,.018)}
+.demo-num{width:2.2vw;height:2.2vw;border-radius:.45vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.62vw;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#22C55E}
+.demo-title{font-size:.82vw;font-weight:800;color:#E2E8F0;margin-bottom:.1vw}
+.demo-sub{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#475569;line-height:1.45}
+.demo-result{font-family:'JetBrains Mono',monospace;font-size:.58vw;text-align:center;border-radius:.35vw;padding:.25vw .35vw;border:1px solid rgba(255,255,255,.08)}
+.demo-result.pass{color:#22C55E;border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.08)}
+.demo-result.rewrite{color:#22D3EE;border-color:rgba(34,211,238,.28);background:rgba(34,211,238,.07)}
+.demo-result.deny{color:#FB923C;border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.08)}
+.demo-result.ask{color:#818CF8;border-color:rgba(129,140,248,.3);background:rgba(129,140,248,.08)}
+#s6.slide.active .demo-step{animation:railpulse 5.6s ease-in-out infinite}
+#s6.slide.active .demo-step:nth-child(2){animation-delay:.35s}#s6.slide.active .demo-step:nth-child(3){animation-delay:.7s}#s6.slide.active .demo-step:nth-child(4){animation-delay:1.05s}#s6.slide.active .demo-step:nth-child(5){animation-delay:1.4s}
+@keyframes railpulse{0%,36%,100%{border-color:rgba(255,255,255,.07)}12%{border-color:rgba(34,197,94,.38);box-shadow:0 0 1.2vw rgba(34,197,94,.1)}}
+
+/* S7 safety */
+#s7 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1fr;padding:4vw 4vw 3vw;gap:3vw}
+#s7 .left,#s7 .right{display:flex;flex-direction:column;justify-content:center}
+.safety-compare{display:grid;grid-template-columns:1fr 1fr;gap:1vw;margin-top:1.1vw}
+.safe-card{border-radius:.75vw;padding:1.2vw;border:1px solid rgba(34,197,94,.32);background:rgba(34,197,94,.045)}
+.safe-card.bad{border-color:rgba(251,146,60,.32);background:rgba(251,146,60,.045)}
+.safe-card b{font-size:1.05vw;color:#E2E8F0}.safe-card p{font-size:.76vw;line-height:1.6;color:#64748B;margin-top:.55vw}
+.warn-list{display:flex;flex-direction:column;gap:.65vw;margin-top:1vw}
+.warn-card{display:flex;align-items:flex-start;gap:.8vw;padding:.72vw .9vw;border-radius:.55vw;border:1px solid rgba(251,146,60,.24);background:rgba(251,146,60,.045)}
+.warn-icon{width:2vw;height:2vw;border-radius:.4vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#FB923C;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);flex-shrink:0}
+.warn-title{font-size:.86vw;font-weight:800;color:#E2E8F0}.warn-copy{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#A66737;line-height:1.45;margin-top:.12vw}
+
+/* S8 recap */
+#s8 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.95fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s8 .left,#s8 .right{display:flex;flex-direction:column;justify-content:center}
+#s8 .h-big{font-size:3vw;line-height:1.08;padding-bottom:.22vw}
+.role-stack{display:flex;flex-direction:column;gap:.75vw;margin-top:1.15vw}
+.role-card{display:grid;grid-template-columns:3vw 1fr;gap:.9vw;align-items:center;padding:.9vw 1vw;border-radius:.65vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02)}
+.role-card.g{border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.045)}
+.role-card.c{border-color:rgba(34,211,238,.34);background:rgba(34,211,238,.045)}
+.role-card.o{border-color:rgba(251,146,60,.34);background:rgba(251,146,60,.045)}
+.role-icon{width:3vw;height:3vw;border-radius:.55vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.72vw;font-weight:800;border:1px solid rgba(255,255,255,.12);background:#020810}
+.role-card.g .role-icon,.role-card.g .role-name{color:#22C55E}.role-card.c .role-icon,.role-card.c .role-name{color:#22D3EE}.role-card.o .role-icon,.role-card.o .role-name{color:#FB923C}
+.role-name{font-size:1.12vw;font-weight:900;margin-bottom:.18vw}.role-copy{font-size:.78vw;color:#64748B;line-height:1.5}.role-code{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#475569;margin-top:.22vw}
+.role-arrow{height:.9vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#1E3A2A}
+#s8.slide.active .role-card{animation:recapglow 4.8s ease-in-out infinite}
+#s8.slide.active .role-card.c{animation-delay:.35s}#s8.slide.active .role-card.o{animation-delay:.7s}
+@keyframes recapglow{0%,35%,100%{box-shadow:none}14%{box-shadow:0 0 1.4vw rgba(34,197,94,.12)}}
+.hook-card{border:1px solid rgba(34,197,94,.22);background:rgba(2,8,16,.72);border-radius:.85vw;overflow:hidden;box-shadow:0 0 3vw rgba(34,197,94,.06);margin-top:1.15vw}
+.hook-card-head{display:flex;align-items:center;justify-content:space-between;padding:.85vw 1vw;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03)}
+.hook-card-title{font-size:.9vw;font-weight:900;color:#E2E8F0}.hook-card-tag{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#22C55E;border:1px solid rgba(34,197,94,.28);border-radius:999px;padding:.18vw .55vw;background:rgba(34,197,94,.07)}
+.hook-steps{display:grid;grid-template-columns:1fr 1fr;gap:.75vw;padding:1vw}
+.hook-step{position:relative;min-height:7vw;border:1px solid rgba(255,255,255,.07);border-radius:.62vw;background:rgba(255,255,255,.018);padding:.9vw}
+.hook-step:before{content:attr(data-no);position:absolute;top:.75vw;right:.75vw;font-family:'JetBrains Mono',monospace;font-size:.6vw;color:#1E3A2A}
+.hook-step b{display:block;font-family:'JetBrains Mono',monospace;font-size:.72vw;margin-bottom:.38vw}.hook-step span{display:block;font-size:.75vw;color:#64748B;line-height:1.48}
+.hook-step.g b{color:#22C55E}.hook-step.c b{color:#22D3EE}.hook-step.o b{color:#FB923C}.hook-step.i b{color:#818CF8}
+#s8.slide.active .hook-step{animation:stepflash 5.6s ease-in-out infinite}
+#s8.slide.active .hook-step:nth-child(2){animation-delay:.35s}#s8.slide.active .hook-step:nth-child(3){animation-delay:.7s}#s8.slide.active .hook-step:nth-child(4){animation-delay:1.05s}
+@keyframes stepflash{0%,34%,100%{border-color:rgba(255,255,255,.07)}12%{border-color:rgba(34,211,238,.35);box-shadow:0 0 1vw rgba(34,211,238,.08)}}
+.final-line{margin-top:.9vw;padding:.78vw .95vw;border-radius:.55vw;border:1px solid rgba(34,197,94,.2);background:rgba(34,197,94,.04);font-size:.82vw;color:#86EFAC;line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="deck">
 
-<div class="slide active" id="s0">
+<div class="slide active" id="s0" data-screen-label="01 Cover">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="cover-wrap">
-    <div class="cover-left">
-      <div class="chip"><div class="chip-dot"></div>第八期 · 横切逻辑插件化</div>
-      <div class="cover-title">Hooks</div>
-      <div class="cover-green">生命周期</div>
-      <div class="desc" style="max-width:39vw">本期的核心句：<b>模型决定想做什么，Runtime 决定能否真的发生。</b>Hook 是 Agent 控制平面的关键组件——插在生命周期边界上，自动触发，可观察、修改、拦截、替换。</div>
-      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
-        <span class="badge-g">Before/After</span>
-        <span class="badge-i">短路拦截</span>
-        <span class="badge-o">控制平面</span>
-        <span class="badge-dim">step11_hooks.py</span>
-      </div>
-    </div>
-    <div class="cover-right">
-      <div class="info-row hi"><div class="info-icon">监</div><div><div class="info-name">监控</div><div class="info-sub">打印每轮 LLM 耗时与 token</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">限</div><div><div class="info-name">限流</div><div class="info-sub">限制窗口期最大调用次数</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">审</div><div><div class="info-name">审计</div><div class="info-sub">记录 write_file / run_command</div></div></div>
-    </div>
-  </div>
-  <div class="footer"><span>第八期</span><span>BUILD AGENT EXAMPLE · 2026</span></div>
-</div>
-
-<div class="slide" id="s1">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 问题 &nbsp;·&nbsp; <span>核心逻辑越来越臃肿</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">问题定义 · 横切需求耦合</div>
-      <div class="h-main">每个新能力<br><em>都改主循环？</em></div>
-      <div class="desc">s01-s10 的监控、限流、审计如果都直接写在 AgentRunner 里，核心调度逻辑会越来越难维护，教学示例也不好拆分。</div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">监控耗时</div><div class="info-sub">想打印每轮 LLM 调用时间</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">2</div><div><div class="info-name">调用限流</div><div class="info-sub">防止高频调用爆 token</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">3</div><div><div class="info-name">操作审计</div><div class="info-sub">记录所有写文件/执行命令</div></div></div>
-    </div>
-    <div class="col">
+  <div class="wrap">
+    <div class="left">
+      <div class="chip-top"><div class="chip-dot"></div>AGENT 进阶 &nbsp;·&nbsp; 第八期</div>
+      <div class="h1"><span class="a">Hooks</span><span class="sep"> · </span><span class="b">检查挂点</span></div>
+      <div class="subtitle">// 给 Agent 主流程加一排安检点</div>
       <div class="terminal">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">Bad</div></div>
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">一句话记住 Hook</div></div>
         <div class="term-body">
-          <span class="kw">def</span> <span class="fn">step</span>(self, history):<br>
-          &nbsp;&nbsp;<span class="warn"># 监控代码</span><br>
-          &nbsp;&nbsp;start = time()<br>
-          &nbsp;&nbsp;message = client.messages.create(...)<br>
-          &nbsp;&nbsp;<span class="warn"># 限流代码</span><br>
-          &nbsp;&nbsp;<span class="kw">if</span> too_many_calls(): <span class="kw">return</span> ...<br>
-          &nbsp;&nbsp;<span class="warn"># 审计代码</span><br>
-          &nbsp;&nbsp;log_tool_call(...)<br>
-          &nbsp;&nbsp;...<br><br>
-          <span class="out">结论</span>：核心逻辑被横切需求淹没
+          <div><span class="t-g">Hook</span><span style="color:#E2E8F0"> = 主流程上预留的挂点</span></div>
+          <div><span class="t-c">Registry</span><span style="color:#E2E8F0"> = 挂规则卡的架子</span></div>
+          <div><span class="t-o">Runner</span><span style="color:#E2E8F0"> = Agent 过站时自动触发</span></div>
+          <div><span class="t-i">Decision</span><span style="color:#E2E8F0">= 放行、改写、拦截、询问</span><span class="cursor"></span></div>
         </div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="sec-label">// 这一期看啥</div>
+      <div class="step g"><div class="ico">01</div><div><div class="sname">钩子到底像什么</div><div class="shint">生活挂钩 -> 流程挂点</div></div></div>
+      <div class="step c"><div class="ico">02</div><div><div class="sname">Agent 为什么需要 Hooks</div><div class="shint">地铁安检线比喻</div></div></div>
+      <div class="step o"><div class="ico">03</div><div><div class="sname">怎么搭起来</div><div class="shint">Hook / Registry / Runner</div></div></div>
+      <div class="step g"><div class="ico">04</div><div><div class="sname">哪些事能拦住</div><div class="shint">审计、改写、拒绝、确认</div></div></div>
+    </div>
+  </div>
+  <div class="footer"><div>Hooks 不是让模型更聪明，而是让流程更可控</div><div>9 页 · 小白版</div></div>
+</div>
+
+<div class="slide" id="s1" data-screen-label="02 Hook Meaning">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
+  <div class="page-id">// 第 2 页 &nbsp;—&nbsp; <span>从“钩子”这个意思切入</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">Hook 直译是钩子</div>
+      <div class="h-big">重点不是钓鱼<br><span class="grad-g">是“挂上去”</span></div>
+      <div class="desc">生活里的挂钩，本身不做事。它只是预留一个位置，让你需要的时候，把钥匙、牌子、工具挂上去。</div>
+      <div class="map-pair">
+        <div class="map-card"><b>生活里</b><span>墙上有挂钩，钥匙来了就挂上去。墙不用重建。</span></div>
+        <div class="map-card"><b>Agent 里</b><span>流程里有挂点，日志、安全、审计来了就挂上去。主循环不用重写。</span></div>
+      </div>
+      <div class="hook-strip"><div class="hook-tag">日志卡</div><div class="hook-tag">安全卡</div><div class="hook-tag">审计卡</div><div class="hook-tag">改写卡</div></div>
+    </div>
+    <div class="right">
+      <div class="art-card"><img src="assets/hooks/hooks-metaphor-rail.png" alt="生活挂钩过渡到 Agent 流程挂点"></div>
+      <div class="note-box" style="margin-top:1vw">
+        <div class="note-icon">白</div>
+        <div class="note-text">Hook 不是主流程本身。它像挂点：主流程照常走，需要额外检查时，把一张规则卡挂上去。</div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="slide" id="s2">
+<div class="slide" id="s2" data-screen-label="03 Agent Hooks">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div><div class="glow-r"></div></div>
+  <div class="page-id">// 第 3 页 &nbsp;—&nbsp; <span>正式引入 Agent Hooks</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">Agent Hooks</div>
+      <div class="h-big">把 Agent 想成<br><span class="grad-c">一条安检线</span></div>
+      <div class="desc">用户输入进来，模型想一想，工具真去做，最后准备结束。每过一站，都可以挂一张检查卡。</div>
+      <div class="station-list">
+        <div class="station"><div class="st-no">1</div><div><div class="st-name">进站：用户输入</div><div class="st-sub">要不要记录、要不要补上下文</div></div><div class="st-hook">挂点</div></div>
+        <div class="station"><div class="st-no">2</div><div><div class="st-name">候车：模型调用</div><div class="st-sub">要不要限流、要不要改 system prompt</div></div><div class="st-hook">挂点</div></div>
+        <div class="station"><div class="st-no">3</div><div><div class="st-name">过闸：工具执行</div><div class="st-sub">要不要拦危险命令、改路径、做审计</div></div><div class="st-hook">挂点</div></div>
+        <div class="station"><div class="st-no">4</div><div><div class="st-name">出站：准备结束</div><div class="st-sub">结果够不够好，要不要继续补一轮</div></div><div class="st-hook">挂点</div></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="art-card"><img src="assets/hooks/hooks-agent-gates.png" alt="Agent 流程穿过多个安检挂点"></div>
+      <div class="note-box">
+        <div class="note-icon">要</div>
+        <div class="note-text">Agent Hooks 的重要性：把安全、日志、审计、改写这些“横切逻辑”，从主循环里拆出来。</div>
+      </div>
+      <div class="chip-row"><span class="chip">主流程更干净</span><span class="chip cyan">规则集中管理</span><span class="chip orange">危险动作先拦截</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s3" data-screen-label="04 Build Skeleton">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
+  <div class="page-id">// 第 4 页 &nbsp;—&nbsp; <span>搭建骨架</span></div>
+  <div class="wrap">
+    <div class="tag">不先讲代码，先讲骨架</div>
+    <div class="h-big" style="text-align:center">搭 Agent Hooks<br><span class="grad-g">只要三块</span></div>
+    <div class="build-grid">
+      <div class="build-card g">
+        <div class="build-label">// Hook</div>
+        <div class="build-title">规则卡</div>
+        <div class="build-copy">一张卡只管一件事：记录日志、拦危险命令、改写路径、问用户确认。</div>
+        <div class="tiny-code">before_tool_call(ctx)</div>
+      </div>
+      <div class="build-arrow">→</div>
+      <div class="build-card c">
+        <div class="build-label">// Registry</div>
+        <div class="build-title">挂卡架</div>
+        <div class="build-copy">把很多规则卡按顺序挂起来。某个节点到了，就一张张问：你要不要处理？</div>
+        <div class="tiny-code">emit(event, ctx)</div>
+      </div>
+      <div class="build-arrow">→</div>
+      <div class="build-card o">
+        <div class="build-label">// Runner</div>
+        <div class="build-title">主流程</div>
+        <div class="build-copy">Agent 继续跑自己的流程。只是在关键站点停一下，触发挂在那里的规则卡。</div>
+        <div class="tiny-code">model -> tool -> result</div>
+      </div>
+    </div>
+    <div class="note-box" style="margin-top:1.4vw;max-width:70vw">
+      <div class="note-icon">记</div>
+      <div class="note-text">小白先记这句话：Hook 是规则卡，Registry 是挂卡架，Runner 是过站的 Agent 主流程。</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s4" data-screen-label="05 Trigger Points">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 方案 &nbsp;·&nbsp; <span>事件总线 + Hook 基类</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">Hook 生命周期</div>
-      <div class="h-main">在关键节点<br><em>插入自定义逻辑</em></div>
-      <div class="flow-col">
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">输</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">on_user_input</div><div class="frow-sub">用户输入提交时</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">轮</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">before_turn / after_turn</div><div class="frow-sub">LLM 调用前后</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">工</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">before_tool_call / after_tool_call</div><div class="frow-sub">单个工具执行前后</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">压</div></div><div class="frow-body"><div class="frow-name">before_compact / after_compact</div><div class="frow-sub">历史压缩前后</div></div></div>
+  <div class="page-id">// 第 5 页 &nbsp;—&nbsp; <span>挂点放在哪里</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">触发位置</div>
+      <div class="h-big">不是到处乱挂<br><span class="grad-g">只挂关键站点</span></div>
+      <div class="desc">Agent 一轮运行里，真正需要检查的地方不多。教学版保留五个常见位置，对应一轮对话从开始到结束的边界。</div>
+      <div class="trigger-list">
+        <div class="trigger"><div class="trigger-key">前</div><div><b>before_turn</b><span>一轮开始前：注入上下文、限流、补 system prompt</span></div></div>
+        <div class="trigger"><div class="trigger-key">后</div><div><b>after_turn</b><span>模型返回后：记录耗时、保存模型输出</span></div></div>
+        <div class="trigger"><div class="trigger-key">工</div><div><b>before_tool_call</b><span>工具执行前：拦危险命令、敏感文件、人工确认</span></div></div>
+        <div class="trigger"><div class="trigger-key">回</div><div><b>after_tool_call</b><span>工具执行后：审计统计、整理结果、截断长输出</span></div></div>
+        <div class="trigger"><div class="trigger-key">停</div><div><b>on_stop</b><span>准备结束时：最后检查，必要时提醒再补一轮</span></div></div>
       </div>
     </div>
-    <div class="col">
-      <div class="code-card green compact">
-        <div class="c-head"><span class="c-label g">Hook 基类</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="kw">class</span> <span class="fn">Hook</span>:<br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">before_turn</span>(self, ctx): <span class="kw">pass</span><br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">after_turn</span>(self, ctx): <span class="kw">pass</span><br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">before_tool_call</span>(self, ctx): <span class="kw">pass</span><br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">after_tool_call</span>(self, ctx): <span class="kw">pass</span><br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">before_compact</span>(self, ctx): <span class="kw">pass</span><br>
-&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">after_compact</span>(self, ctx): <span class="kw">pass</span>
-        </div>
+    <div class="right">
+      <div class="tag">一条主流程线</div>
+      <div class="h-mid">输入 → 模型 → 工具 → 结束</div>
+      <div class="metro-line">
+        <div class="metro-station"><div class="metro-name">输入站</div><div class="metro-sub">补上下文<br>记用户请求</div></div>
+        <div class="metro-station"><div class="metro-name">模型站</div><div class="metro-sub">限流<br>改 system prompt</div></div>
+        <div class="metro-station"><div class="metro-name">工具站</div><div class="metro-sub">拦危险命令<br>改工具参数</div></div>
+        <div class="metro-station"><div class="metro-name">出站口</div><div class="metro-sub">质量检查<br>必要时继续</div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6vw;margin-top:.8vw">
-        <div class="info-row hi"><div class="info-icon">数</div><div><div class="info-name">数据平面</div><div class="info-sub">模型推理、工具执行、任务完成</div></div></div>
-        <div class="info-row hi2"><div class="info-icon">控</div><div><div class="info-name">控制平面</div><div class="info-sub">权限、审计、拦截、策略</div></div></div>
+      <div class="note-box" style="margin-top:1vw">
+        <div class="note-icon">白</div>
+        <div class="note-text">Before 就像进闸前安检，After 更像摄像头和记录本。能不能拦住危险动作，关键看你挂在哪一站。</div>
       </div>
-      <div class="desc" style="margin-top:.6vw">Hook 属于<b>控制平面</b>，不是模型的"大脑"，而是 Runtime 的基础设施。</div>
     </div>
   </div>
 </div>
 
-<div class="slide" id="s3">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 机制 &nbsp;·&nbsp; <span>Registry 与短路</span></div>
-  <div class="two-col wide-r">
-    <div class="col">
-      <div class="tag">HookRegistry</div>
-      <div class="h-main">按顺序触发<br><em>非空即短路</em></div>
-      <div class="desc">`HookRegistry.emit(event, ctx)` 遍历所有 hook；任一 hook 返回非 None，立即中断并返回该值。这让限流 hook 能直接拦截调用。</div>
-      <div class="info-row hi"><div class="info-icon">顺</div><div><div class="info-name">顺序执行</div><div class="info-sub">按注册顺序调用每个 hook 的同名方法</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">短</div><div><div class="info-name">短路返回</div><div class="info-sub">返回非 None 时跳过剩余 hook</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">隔</div><div><div class="info-name">错误隔离</div><div class="info-sub">单个 hook 异常不影响其他 hook 和主循环</div></div></div>
-    </div>
-    <div class="col">
-      <div class="code-card ind compact">
-        <div class="c-head"><span class="c-label i">RateLimitHook</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="kw">def</span> <span class="fn">before_turn</span>(self, ctx):<br>
-&nbsp;&nbsp;now = time.monotonic()<br>
-&nbsp;&nbsp;self._timestamps = [<br>
-&nbsp;&nbsp;&nbsp;&nbsp;t <span class="kw">for</span> t <span class="kw">in</span> self._timestamps<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> t > now - self.window_sec<br>
-&nbsp;&nbsp;]<br>
-&nbsp;&nbsp;<span class="kw">if</span> len(self._timestamps) >= self.max_calls:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="st">"Rate limit exceeded"</span><br>
-&nbsp;&nbsp;self._timestamps.append(now)
-        </div>
-      </div>
-      <div class="desc" style="margin-top:.8vw">返回字符串后，`AgentRunner.step()` 直接将该字符串作为本轮结果返回，不再调用 LLM。</div>
-    </div>
-  </div>
-</div>
-
-<div class="slide" id="s4">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 应用 &nbsp;·&nbsp; <span>内置 Hooks</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">Built-ins</div>
-      <div class="h-main">拿来<br><em>即用</em></div>
-      <div class="mod-grid">
-        <div class="mod-card g"><div class="mod-file">builtins.py</div><div class="mod-name">LoggingHook</div><div class="mod-sub">After：打印每轮 LLM 耗时与 token 用量</div></div>
-        <div class="mod-card i"><div class="mod-file">builtins.py</div><div class="mod-name">RateLimitHook</div><div class="mod-sub">Before：窗口期内限制最大调用次数，可短路</div></div>
-        <div class="mod-card o"><div class="mod-file">builtins.py</div><div class="mod-name">GuardHook</div><div class="mod-sub">Before：拦截 .env / 私钥 / 生产配置写入</div></div>
-        <div class="mod-card s"><div class="mod-file">builtins.py</div><div class="mod-name">BlockDangerousCommandHook</div><div class="mod-sub">Before：拦截 rm -rf / 与 DROP TABLE</div></div>
+<div class="slide" id="s5" data-screen-label="06 Execution Shape">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div></div>
+  <div class="page-id">// 第 6 页 &nbsp;—&nbsp; <span>一张规则卡怎么工作</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">执行结构</div>
+      <div class="h-big">一张 Hook 卡<br><span class="grad-c">三问一结果</span></div>
+      <div class="desc">口径定死：前三步是问题，最后一步是结果。三问对应 Event、Matcher、Handler；结果单独叫 Decision。</div>
+      <div class="question-flow">
+        <div class="qcard g"><div class="qhead">谁路过？</div><div class="qcopy">现在发生的是模型调用，还是工具调用？</div><div class="qterm">Event</div></div>
+        <div class="build-arrow">→</div>
+        <div class="qcard c"><div class="qhead">我管吗？</div><div class="qcopy">这张卡只管写文件，还是只管命令？</div><div class="qterm">Matcher</div></div>
+        <div class="build-arrow">→</div>
+        <div class="qcard o"><div class="qhead">怎么处理？</div><div class="qcopy">读取 ctx，判断风险，决定要不要改参数或写日志。</div><div class="qterm">Handler</div></div>
       </div>
     </div>
-    <div class="col">
-      <div class="tag">安全隔离</div>
-      <div class="h-main">主 runner 与<br><em>子进程</em>用不同 registry</div>
-      <div class="desc">主 Agent 使用完整 hooks；子代理和固定队友只使用 `safe_hooks`（默认仅 LoggingHook），避免审计类 hook 把主上下文泄露给独立进程。</div>
-      <div class="code-card orange compact">
-        <div class="c-head"><span class="c-label o">AgentLoop</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-self.hooks = HookRegistry()<br>
-self.hooks.register(LoggingHook())<br>
-self.hooks.register(RateLimitHook())<br>
-self.hooks.register(GuardHook())<br>
-self.hooks.register(BlockDangerousCommandHook())<br>
-self.hooks.register(ToolAuditHook(".hooks_audit.jsonl"))<br>
-self.hooks.register(ContextInjectionHook(root))<br><br>
-self.safe_hooks = HookRegistry()<br>
-self.safe_hooks.register(LoggingHook())<br><br>
-<span class="cm"># 主 runner 用 hooks，子代理用 safe_hooks</span>
+    <div class="right">
+      <div class="tag">一结果</div>
+      <div class="h-mid">处理完，返回一个 Decision</div>
+      <div class="decision-list">
+        <div class="decision"><b>allow</b><span>放行。也可以顺手把参数改一下。</span></div>
+        <div class="decision"><b>deny</b><span>拒绝。工具根本不会执行。</span></div>
+        <div class="decision"><b>ask</b><span>先问人。输入 y 才继续。</span></div>
+        <div class="decision"><b>block</b><span>先别结束。让 Agent 再补一轮。</span></div>
+      </div>
+      <div class="terminal" style="margin-top:1vw">
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">白话版</div></div>
+        <div class="term-body">
+          <span class="out">工具站有人路过</span><br>
+          <span class="out">这张卡只管 run_command</span><br>
+          <span class="out">Handler 检查命令内容</span><br>
+          <span class="warn">最后返回 Decision: deny</span>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="slide" id="s5">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 动手 &nbsp;·&nbsp; <span>试一试</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">Try it</div>
-      <div class="h-main">拦截危险命令<br><em>记录写操作</em></div>
-      <div class="desc">`step11_hooks.py` 注册了 logging、rate_limit、tool_audit 和 block_dangerous 四个 hook。运行后输入不同指令观察 hook 输出。</div>
+<div class="slide" id="s6" data-screen-label="07 Demo">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-o"></div></div>
+  <div class="page-id">// 第 7 页 &nbsp;—&nbsp; <span>几个常见结果</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">动手试试 · step12_hooks.py</div>
+      <div class="h-big">一条安检线<br><span class="grad-o">看完五种结果</span></div>
+      <div class="desc">不用先看源码。先看运行效果：一张张规则卡挂上去后，Agent 的动作开始可控。</div>
       <div class="terminal">
         <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">Terminal</div></div>
         <div class="term-body">
-          <span class="prompt">$</span> python build-agent-example/code/step11_hooks.py<br><br>
-          <span class="dim">你：</span>写一份奏折到 memorial.txt<br>
-          <span class="out">[hook:logging] turn finished in 1234.5ms</span><br>
-          <span class="out">写入 memorial.txt 已审计到 .hooks_audit.jsonl</span><br><br>
-          <span class="dim">你：</span>执行 rm -rf /<br>
-          <span class="warn">Error: dangerous command blocked by hook</span>
+          <span class="prompt">$</span> python build-agent-example/code/step12_hooks.py<br><br>
+          <span class="dim">你：</span>写 demo_production/report.txt<br>
+          <span class="out">[改写] -> sandbox/demo_production/report.txt</span><br>
+          <span class="out">[审计] write_file -> .hooks_audit.jsonl</span><br><br>
+          <span class="dim">你：</span>执行 destructive-demo --target root<br>
+          <span class="warn">[拒绝] 命中破坏性模式，已拦截</span><br><br>
+          <span class="dim">你：</span>执行 git commit --dry-run -m "hook test"<br>
+          <span class="out">[询问] 输入 y 继续，其余取消</span>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="tag">统一模型</div>
-      <div class="h-main">Event→Matcher<br><em>→Handler→Outcome</em></div>
-      <div class="desc">无论框架叫 Hook、Callback 还是 Middleware，都遵循这个统一结构。</div>
-      <div class="info-row hi"><div class="info-icon">E</div><div><div class="info-name">Event（事件）</div><div class="info-sub">Agent 开始/结束、模型调用前后、工具执行前后</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">M</div><div><div class="info-name">Matcher（匹配器）</div><div class="info-sub">所有工具调用？仅 Bash？仅写文件？仅 production？</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">H</div><div><div class="info-name">Handler（处理器）</div><div class="info-sub">函数 / Shell / HTTP / MCP / LLM / 子 Agent / 人工审批</div></div></div>
-      <div class="info-row"><div class="info-icon">O</div><div><div class="info-name">Outcome（结果）</div><div class="info-sub">continue / allow / deny / ask / replace / retry / skip</div></div></div>
-    </div>
-  </div>
-</div>
-
-
-<!-- ══ S6: Before / After / Around Hook 三种形态 ══ -->
-<div class="slide" id="s6">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-c"></div></div>
-  <div class="page-id">// 形态 &nbsp;·&nbsp; <span>Before / After / Around</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">Hook 三种形态</div>
-      <div class="h-main">不只是观察<br><em>还能修改和拦截</em></div>
-      <div class="desc">判断框架中的某个机制是否算 Hook，不看名字，看三个问题：<b>能否修改输入？能否阻止操作？能否替换输出？</b></div>
-      <div class="info-row hi"><div class="info-icon">前</div><div><div class="info-name">Before Hook</div><div class="info-sub">操作前运行：参数校验、权限检查、敏感操作拦截、上下文注入</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">后</div><div><div class="info-name">After Hook</div><div class="info-sub">操作后运行：日志追踪、格式化输出、审计记录、发送通知</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">裹</div><div><div class="info-name">Around / Wrap Hook</div><div class="info-sub">包裹操作：短路、重试、缓存、切换模型、结果替换——能力最强</div></div></div>
-    </div>
-    <div class="col">
-      <div class="code-card green compact" style="margin-bottom:.8vw">
-        <div class="c-head"><span class="c-label g">Before Hook：GuardHook</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="kw">def</span> <span class="fn">before_tool_call</span>(self, ctx):<br>
-&nbsp;&nbsp;path = ctx.get("input", {}).get("path","")<br>
-&nbsp;&nbsp;<span class="kw">for</span> p <span class="kw">in</span> [<span class="st">".env"</span>, <span class="st">"id_rsa"</span>, <span class="st">"production.yml"</span>]:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> p <span class="kw">in</span> path:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="st">"Error: sensitive file blocked"</span>
-        </div>
-      </div>
-      <div class="code-card ind compact" style="margin-bottom:.8vw">
-        <div class="c-head"><span class="c-label i">After Hook：ToolAuditHook</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="kw">def</span> <span class="fn">after_tool_call</span>(self, ctx):<br>
-&nbsp;&nbsp;entry = {<span class="st">"ts"</span>: now, <span class="st">"tool"</span>: ctx[<span class="st">"name"</span>]}<br>
-&nbsp;&nbsp;log_file.write(json.dumps(entry) + <span class="st">"\n"</span>)
-        </div>
-      </div>
-      <div class="code-card orange compact">
-        <div class="c-head"><span class="c-label o">Around 思路</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="cm"># 包裹 LLM 调用：可短路、重试、缓存</span><br>
-<span class="kw">def</span> <span class="fn">wrap_model_call</span>(self, ctx, call):<br>
-&nbsp;&nbsp;<span class="kw">if</span> cached := self.cache.get(key): <span class="kw">return</span> cached<br>
-&nbsp;&nbsp;<span class="kw">for</span> i <span class="kw">in</span> range(3):<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">try</span>: <span class="kw">return</span> call() <span class="kw">except</span>: ...<br>
-&nbsp;&nbsp;<span class="kw">return</span> fallback_model.call()
-        </div>
+    <div class="right">
+      <div class="tag">演示轨道</div>
+      <div class="h-mid">每个结果都来自一张 Hook 卡</div>
+      <div class="demo-rail">
+        <div class="demo-step"><div class="demo-num">1</div><div><div class="demo-title">普通写入</div><div class="demo-sub">工具跑完后记一笔</div></div><div class="demo-result pass">audit</div></div>
+        <div class="demo-step"><div class="demo-num">2</div><div><div class="demo-title">沙箱改写</div><div class="demo-sub">危险路径改到安全目录</div></div><div class="demo-result rewrite">rewrite</div></div>
+        <div class="demo-step"><div class="demo-num">3</div><div><div class="demo-title">敏感文件</div><div class="demo-sub">.env / id_rsa / production.yml</div></div><div class="demo-result deny">deny</div></div>
+        <div class="demo-step"><div class="demo-num">4</div><div><div class="demo-title">高敏命令</div><div class="demo-sub">提交 / 发布 / 部署类动作</div></div><div class="demo-result ask">ask</div></div>
+        <div class="demo-step"><div class="demo-num">5</div><div><div class="demo-title">长输出</div><div class="demo-sub">工具结果回来后截短</div></div><div class="demo-result rewrite">trim</div></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ S7: Hook 概念辨析 ══ -->
-<div class="slide" id="s7">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-r"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 辨析 &nbsp;·&nbsp; <span>Hook vs Prompt / Tool / Guardrail</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">概念对比</div>
-      <div class="h-main">名字不重要<br><em>看具体能力</em></div>
-      <div class="desc">各框架用词不统一：Claude Code 叫 Hooks，OpenAI 叫 AgentHooks+Guardrails，LangChain 叫 Middleware，CrewAI 叫 Execution Hooks。关键不是名字，而是三个问题。</div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">Hook vs Prompt</div><div class="info-sub">Prompt 是给模型看的指令（依赖遵循）；Hook 是 Runtime 执行的规则（实际边界）</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">2</div><div><div class="info-name">Hook vs Tool</div><div class="info-sub">Tool 由模型选择调用；Hook 由系统在事件发生时自动触发</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">3</div><div><div class="info-name">Hook vs Guardrail</div><div class="info-sub">Guardrail 描述策略约束（是什么）；Hook 描述执行节点（在哪做）</div></div></div>
+<div class="slide" id="s7" data-screen-label="08 Safety">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-o"></div></div>
+  <div class="page-id">// 第 8 页 &nbsp;—&nbsp; <span>安全边界</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">安全边界</div>
+      <div class="h-big">安检必须<br><span class="grad-o">放在进闸前</span></div>
+      <div class="desc">很多人以为“有 Hook 就安全”。不对。Hook 只是挂点，安全不安全，看你把规则挂在哪里。</div>
+      <div class="safety-compare">
+        <div class="safe-card"><b>Before Hook</b><p>工具执行前检查。发现危险，直接不让过闸。</p></div>
+        <div class="safe-card bad"><b>After Hook</b><p>工具执行后记录。事情已经发生，只能留证据。</p></div>
+      </div>
+      <div class="note-box" style="margin-top:1vw">
+        <div class="note-icon">稳</div>
+        <div class="note-text">能用确定性规则判断的，不要交给模型猜。路径、金额、危险命令，优先写死规则。</div>
+      </div>
     </div>
-    <div class="col">
-      <div class="terminal" style="margin-bottom:.8vw">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">Prompt vs Hook</div></div>
-        <div class="term-body">
-          <span class="out">Prompt：</span><span class="dim">"请不要删除生产数据库"</span><br>
-          <span class="out">→ 模型可能"忘记"遵循</span><br><br>
-          <span class="warn">Hook：</span><span class="dim">检测到 DELETE production →</span> <span class="warn">DENY</span><br>
-          <span class="out">→ Runtime 直接拒绝，不可绕过</span>
+    <div class="right">
+      <div class="tag">三个误区</div>
+      <div class="h-mid">别把 Hook 神化</div>
+      <div class="warn-list">
+        <div class="warn-card"><div class="warn-icon">!</div><div><div class="warn-title">After Hook 不能阻止已经发生的事</div><div class="warn-copy">审计不是安检，它只是记录。</div></div></div>
+        <div class="warn-card"><div class="warn-icon">!</div><div><div class="warn-title">异步 Hook 不适合授权</div><div class="warn-copy">Agent 不等结果，适合日志，不适合付款审批。</div></div></div>
+        <div class="warn-card"><div class="warn-icon">!</div><div><div class="warn-title">LLM 不能当硬边界</div><div class="warn-copy">模型判断有概率性，硬规则要放前面。</div></div></div>
+        <div class="warn-card"><div class="warn-icon">!</div><div><div class="warn-title">Stop Hook 要防递归</div><div class="warn-copy">最多补一次，不要自己叫自己。</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s8" data-screen-label="09 Recap">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div><div class="glow-r"></div></div>
+  <div class="page-id">// 第 9 页 &nbsp;—&nbsp; <span>收尾复盘</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">最后记住三件东西</div>
+      <div class="h-big">Hook 系统<br><span class="grad-g">三角色</span></div>
+      <div class="desc">Hook 不是单独工作。它要挂到 Registry 里，再由 Runner 在流程边界自动触发。</div>
+      <div class="role-stack">
+        <div class="role-card g">
+          <div class="role-icon">01</div>
+          <div><div class="role-name">Hook</div><div class="role-copy">一张规则卡，写清楚某个挂点要做什么。</div><div class="role-code">before_tool_call(ctx)</div></div>
+        </div>
+        <div class="role-arrow">↓ register()</div>
+        <div class="role-card c">
+          <div class="role-icon">02</div>
+          <div><div class="role-name">Registry</div><div class="role-copy">挂卡架，按注册顺序筛选和触发规则。</div><div class="role-code">emit(event, ctx)</div></div>
+        </div>
+        <div class="role-arrow">↓ runtime boundary</div>
+        <div class="role-card o">
+          <div class="role-icon">03</div>
+          <div><div class="role-name">Runner</div><div class="role-copy">Agent 主流程，经过边界时把事件交给 Registry。</div><div class="role-code">model -> tool -> result</div></div>
         </div>
       </div>
-      <div class="desc">实际框架对照：Claude Code (Hooks)、OpenAI (AgentHooks+Guardrails)、LangChain (Middleware)、Google ADK (Callbacks)、CrewAI (Execution Hooks)、Semantic Kernel (Filters)——解决的是同一类问题，只是术语不同。</div>
     </div>
-  </div>
-</div>
-
-<!-- ══ S8: 安全边界警示 ══ -->
-<div class="slide" id="s8">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 警示 &nbsp;·&nbsp; <span>不是所有 Hook 都是安全边界</span></div>
-  <div class="two-col wide-r">
-    <div class="col">
-      <div class="tag">反直觉的四个事实</div>
-      <div class="h-main">Hook 不等于<br><em>安全机制</em></div>
-      <div class="info-row hi3" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.06)"><div class="info-icon" style="background:rgba(251,146,60,.15);color:#FB923C;border-color:rgba(251,146,60,.35)">⚠</div><div><div class="info-name">After Hook 无法阻止操作</div><div class="info-sub">等 after_tool 日志发现危险时，操作已经发生。权限控制必须放 Before，同步执行，fail-closed。</div></div></div>
-      <div class="info-row hi3" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.06)"><div class="info-icon" style="background:rgba(251,146,60,.15);color:#FB923C;border-color:rgba(251,146,60,.35)">⚠</div><div><div class="info-name">异步 Hook 不适合授权</div><div class="info-sub">后台日志/通知类 Hook Agent 不会等待结果。适合 telemetry，不适合支付审批、数据外发检查。</div></div></div>
-      <div class="info-row hi3" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.06)"><div class="info-icon" style="background:rgba(251,146,60,.15);color:#FB923C;border-color:rgba(251,146,60,.35)">⚠</div><div><div class="info-name">LLM Hook 不能当绝对安全边界</div><div class="info-sub">可能被提示注入、忽略隐晦风险、相同输入给出不同判断。安全遵循：硬规则 → 权限 → 人工 → LLM，不可反过来。</div></div></div>
-      <div class="info-row hi3" style="border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.06)"><div class="info-icon" style="background:rgba(251,146,60,.15);color:#FB923C;border-color:rgba(251,146,60,.35)">⚠</div><div><div class="info-name">Hook 脚本自身是攻击面</div><div class="info-sub">Hook 配置应视为可执行代码——检查来源、最小权限、不硬编码密钥。</div></div></div>
-    </div>
-    <div class="col">
-      <div class="terminal" style="margin-bottom:.8vw">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">安全的 Hook 分层</div></div>
-        <div class="term-body">
-          <span class="out">第一层</span> 确定性硬规则<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dim">路径白名单、金额上限、正则匹配</span><br>
-          <span class="out">第二层</span> 权限系统<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dim">RBAC、fail-closed、同步执行</span><br>
-          <span class="out">第三层</span> 人工审批<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dim">删数据、发布生产、付款</span><br>
-          <span class="warn">第四层</span> LLM 语义检查<br>
-          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dim">适合验收，不适合替代以上三层</span><br><br>
-          <span class="out">原则：能用确定性代码判断的，不要交给 LLM</span>
+    <div class="right">
+      <div class="tag">一张 Hook 卡内部</div>
+      <div class="h-big">四步跑完<br><span class="grad-c">一次检查</span></div>
+      <div class="desc">口播里的“三问一结果”，放到代码里就是四层模型。</div>
+      <div class="hook-card">
+        <div class="hook-card-head">
+          <div class="hook-card-title">ToolPolicyHook</div>
+          <div class="hook-card-tag">matcher: write_file | run_command</div>
+        </div>
+        <div class="hook-steps">
+          <div class="hook-step g" data-no="01"><b>Event</b><span>什么时候触发？例如工具执行前：before_tool_call。</span></div>
+          <div class="hook-step c" data-no="02"><b>Matcher</b><span>谁路过归我管？例如 write_file 和 run_command。</span></div>
+          <div class="hook-step o" data-no="03"><b>Handler</b><span>具体怎么处理？检查路径、改写参数、拦危险命令。</span></div>
+          <div class="hook-step i" data-no="04"><b>Decision</b><span>返回什么决定？allow、deny、ask、block。</span></div>
         </div>
       </div>
-      <div class="desc" style="margin-top:.8vw">同样要注意：Hook 可能递归触发（如 Stop Hook 启动子 Agent → 子 Agent 结束 → 再次触发 Stop Hook），需要 depth 限制和 once-per-run 控制。</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ S9: 五层分级架构 + 结尾 ══ -->
-<div class="slide" id="s9">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 路径 &nbsp;·&nbsp; <span>分层建设 + 本期回顾</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">推荐分层路径</div>
-      <div class="h-main">从观察到<br><em>语义判断</em></div>
-      <div class="desc">不要一开始就让 Agent 到处调用另一个 Agent。按五层逐步建设：</div>
-      <div class="flow-col">
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">0</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">可观测性</div><div class="frow-sub">日志、trace、耗时、成本、错误——先确认事件模型</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">1</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">确定性转换</div><div class="frow-sub">参数标准化、脱敏、格式化、添加 trace ID</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">2</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">确定性门禁</div><div class="frow-sub">路径白名单、权限表、危险工具阻断</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">3</div><div class="frow-line fl-dim"></div></div><div class="frow-body"><div class="frow-name">人工审批</div><div class="frow-sub">删数据、发布生产、付款、外发敏感信息</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">4</div></div><div class="frow-body"><div class="frow-name">语义判断</div><div class="frow-sub">LLM 或 Agent Hook 验证任务完成质量</div></div></div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="tag">本期核心要义</div>
-      <div class="h-main">Hook 是<br><em>控制面边界</em></div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">Hook 是 Runtime 的生命周期扩展点</div><div class="info-sub">不是模型本身的能力，是控制平面组件</div></div></div>
-      <div class="info-row hi"><div class="info-icon">2</div><div><div class="info-name">触发是确定性的，判断未必是</div><div class="info-sub">LLM / Agent Hook 的判断仍有概率性</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">3</div><div><div class="info-name">不是所有 Hook 都可修改/阻止</div><div class="info-sub">看具体 API 能力，不能只看名称</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">4</div><div><div class="info-name">安全优先同步、确定性、fail-closed</div><div class="info-sub">Agent-Based Hook 适合语义验收，不适合替代权限系统</div></div></div>
-      <div style="display:flex;gap:.6vw;margin-top:1vw">
-        <span class="badge-g">Before/After/Around</span>
-        <span class="badge-i">Event→Handler→Outcome</span>
-        <span class="badge-o">控制平面</span>
-      </div>
+      <div class="final-line">一句话收尾：Hook 是规则卡，Registry 是挂卡架，Runner 是自动触发它们的主流程。</div>
     </div>
   </div>
 </div>
 
 </div>
-
 <div class="nav">
-  <button class="nav-btn" id="prev">‹</button>
+  <div class="nav-btn" id="prev">&#8592;</div>
   <div class="nav-dots" id="dots"></div>
-  <button class="nav-btn" id="next">›</button>
-  <div class="nav-count" id="count">1 / 10</div>
+  <div class="nav-count" id="count">1 / 9</div>
+  <div class="nav-btn" id="next">&#8594;</div>
 </div>
-
 <script>
 const slides = document.querySelectorAll('.slide');
-let idx = 0;
-const dots = document.getElementById('dots');
-slides.forEach((_, i) => {
-  const d = document.createElement('div');
-  d.className = 'nav-dot' + (i === 0 ? ' on' : '');
-  d.addEventListener('click', () => go(i));
-  dots.appendChild(d);
+const dotsEl = document.getElementById('dots');
+const countEl = document.getElementById('count');
+let cur = Number(localStorage.getItem('hooks-deck-slide-v2') || 0);
+if (cur < 0 || cur >= slides.length) cur = 0;
+slides.forEach((slide, i) => {
+  slide.classList.toggle('active', i === cur);
+  const dot = document.createElement('div');
+  dot.className = 'nav-dot' + (i === cur ? ' on' : '');
+  dot.onclick = () => go(i);
+  dotsEl.appendChild(dot);
 });
+countEl.textContent = `${cur + 1} / ${slides.length}`;
 function go(n) {
-  if (n < 0 || n >= slides.length) return;
-  slides[idx].classList.remove('active');
-  dots.children[idx].classList.remove('on');
-  idx = n;
-  slides[idx].classList.add('active');
-  dots.children[idx].classList.add('on');
-  document.getElementById('count').textContent = (idx + 1) + ' / ' + slides.length;
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('on');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('on');
+  countEl.textContent = `${cur + 1} / ${slides.length}`;
+  localStorage.setItem('hooks-deck-slide-v2', String(cur));
 }
-document.getElementById('prev').addEventListener('click', () => go(idx - 1));
-document.getElementById('next').addEventListener('click', () => go(idx + 1));
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('next').onclick = () => go(cur + 1);
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ') go(idx + 1);
-  if (e.key === 'ArrowLeft') go(idx - 1);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); }
+});
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', e => {
+  const diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) diff > 0 ? go(cur + 1) : go(cur - 1);
 });
 </script>
 </body>

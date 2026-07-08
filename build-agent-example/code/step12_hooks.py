@@ -7,6 +7,7 @@ import asyncio
 import re
 import json
 import subprocess
+import sys
 import threading
 import time
 import urllib.request
@@ -34,7 +35,7 @@ SKILLS_DIR = PROJECT_ROOT / "skills"
 MEMORY_DIR = PROJECT_ROOT / "memory"
 TEMPLATES_DIR = PROJECT_ROOT / "templates"
 MCP_CONFIG_PATH = PROJECT_ROOT / "mcp_servers.json"
-AUDIT_FILE = Path(__file__).parent / ".hooks_audit.jsonl"
+AUDIT_FILE = PROJECT_ROOT / ".hooks_audit.jsonl"
 TEAM_DIR = Path(__file__).parent / ".team"
 INBOX_DIR = TEAM_DIR / "inbox"
 
@@ -298,7 +299,7 @@ def execute_basic_tool(block, prefix: str = "") -> str:
 _TOOL_SCHEMAS: dict[str, dict] = {
     "run_command": {
         "name": "run_command",
-        "description": "在终端执行一条 shell 命令并返回输出",
+        "description": "在终端执行一条命令并返回输出。创建或覆盖文件必须调用 write_file。",
         "input_schema": {
             "type": "object",
             "properties": {"command": {"type": "string", "description": "要执行的 shell 命令"}},
@@ -340,7 +341,7 @@ _TOOL_SCHEMAS: dict[str, dict] = {
     },
     "write_file": {
         "name": "write_file",
-        "description": "写入文件内容（覆盖）",
+        "description": "写入文件内容（覆盖）。创建或覆盖文件必须调用这个工具。",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -934,32 +935,128 @@ TEAM = TeammateManager(TEAM_DIR)
 
 
 # ============== Hooks：生命周期拦截、注入与审计（沿用 step11 后新增） ==============
+# s12 引入四层 Hook 模型：Event（事件）→ Matcher（匹配器）→ Handler（处理器）→ Decision（决策）。
+# 该模型与 Claude Code 官方的 Event → Matcher → Handler → Output 结构完全对齐。
+# Claude Code 官方支持五种 Handler 类型：command / http / mcp_tool / prompt / agent。
+# 教学版统一用 Python 类方法，但保留了相同的四层结构和决策语义。
+
+
+class HookDecision:
+    """Hook 的结构化决策结果。与 Claude Code 的 permissionDecision 概念对齐。
+
+    教学版支持四种决策：
+    - allow：放行（可附带 updated_input 改写工具参数）
+    - deny：拒绝（工具不执行，reason 会反馈给 Agent）
+    - ask：请求用户确认（拒绝或非交互环境默认不执行工具）
+    - block：阻止并给出原因（等同于 Claude Code 的继续处理指令）
+    """
+
+    def __init__(self, action: str, reason: str = "", updated_input: dict[str, Any] | None = None):
+        self.action = action            # "allow" | "deny" | "ask" | "block"
+        self.reason = reason            # 人类可读原因
+        self.updated_input = updated_input  # 可选：改写工具参数（对应 Claude Code 的 updatedInput）
+
+    @property
+    def is_blocking(self) -> bool:
+        """是否阻止当前操作继续执行。"""
+        return self.action in ("deny", "block")
+
+    def to_message(self) -> str:
+        """转为 Agent 可读的反馈消息。"""
+        prefix = {"deny": "拒绝", "block": "阻止", "ask": "需要确认", "allow": "已放行"}
+        label = prefix.get(self.action, self.action)
+        msg = f"[HookDecision: {label}] {self.reason}"
+        if self.updated_input:
+            msg += f"（参数已改写：{list(self.updated_input.keys())}）"
+        return msg
+
+
+def confirm_hook_decision(decision: HookDecision) -> bool:
+    """处理 ask 决策。
+
+    教学版故意保持同步确认：终端里输入 y 才继续；非交互环境默认拒绝。
+    这更接近权限 Hook 的 fail-closed 行为。
+    """
+    print(f"\n[hook:permission] {decision.reason}")
+    if not sys.stdin.isatty():
+        print("[hook:permission] 当前不是交互式终端，默认拒绝执行。\n")
+        return False
+    try:
+        answer = input("[hook:permission] 是否继续执行？输入 y 继续，其余取消: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return False
+    return answer in ("y", "yes")
+
+
 class Hook:
-    """Hook 基类：所有事件默认空实现。"""
+    """Hook 基类：所有事件默认空实现。
+
+    四层模型说明（教学版 → Claude Code 官方映射）：
+    - Event（事件）：方法名即事件，如 before_turn、before_tool_call、on_stop
+    - Matcher（匹配器）：matcher 属性控制对哪些工具触发，如 "write_file"、"run_command"
+    - Handler（处理器）：子类覆写事件方法实现具体逻辑。Claude Code 支持 command/http/mcp/prompt/agent 五种
+    - Decision（决策）：返回 HookDecision 或字符串来放行/拒绝/确认/阻止
+    """
 
     name: str = ""
+    matcher: str = "*"  # 工具名匹配："*"=所有、"Edit|Write"=写入、"run_command"=命令
 
+    def matches(self, tool_name: str | None) -> bool:
+        """检查此 Hook 是否匹配给定工具名。对应 Claude Code 的 matcher 字段。
+
+        支持格式：
+        - "*" 或 ""：匹配所有工具
+        - "Edit|Write" 或 "Edit, Write"：管道/逗号分隔，匹配任一
+        - "run_command"：精确匹配
+        """
+        if not tool_name or self.matcher in ("*", ""):
+            return True
+        patterns = [p.strip() for p in self.matcher.replace(",", "|").split("|")]
+        return tool_name in patterns
+
+    # ---- 基础事件 ----
     def before_turn(self, ctx: dict[str, Any]) -> Any:
+        """LLM 调用前触发。可修改 ctx["system_prompt"]，返回非 None 则短路。"""
         pass
 
     def after_turn(self, ctx: dict[str, Any]) -> Any:
+        """LLM 调用后触发。ctx 含 message、usage，用于日志/统计。"""
         pass
 
     def before_tool_call(self, ctx: dict[str, Any]) -> Any:
+        """工具执行前触发。可拒绝、改写参数、请求确认。"""
         pass
 
     def after_tool_call(self, ctx: dict[str, Any]) -> Any:
+        """工具执行后触发。可观察输出、截断、注入 feedback。"""
         pass
 
     def on_user_input(self, ctx: dict[str, Any]) -> Any:
+        """用户提交输入时触发。"""
         pass
 
-    def on_assistant_reply(self, ctx: dict[str, Any]) -> Any:
+    # ---- s12 增强事件（对应 Claude Code 官方的 Stop / SessionStart） ----
+    def on_stop(self, ctx: dict[str, Any]) -> Any:
+        """Agent 准备结束本轮回答时触发。对应 Claude Code 的 Stop 事件。
+        可返回 HookDecision(action="block") 让 Agent 继续处理未完成的工作。"""
+        pass
+
+    def on_session_start(self, ctx: dict[str, Any]) -> Any:
+        """会话启动或恢复时触发。对应 Claude Code 的 SessionStart。
+        适合注入动态上下文、环境变量、当前分支等运行时信息。"""
         pass
 
 
 class HookRegistry:
-    """管理 hook 链并按注册顺序触发事件。"""
+    """管理 hook 链并按注册顺序触发事件。
+
+    核心规则：
+    1. 按注册顺序执行：先注册的 hook 先收到事件
+    2. Matcher 过滤：before/after_tool_call 事件按 Hook.matcher 过滤
+    3. 短路：任一 hook 返回非 None 值（非 allow 类的 HookDecision），立即中断
+    4. 错误隔离：单个 hook 异常不影响其他 hook，打印 [hook error] 后继续
+    """
 
     def __init__(self):
         self._hooks: list[Hook] = []
@@ -967,15 +1064,37 @@ class HookRegistry:
     def register(self, hook: Hook) -> None:
         self._hooks.append(hook)
 
-    def emit(self, event: str, ctx: dict[str, Any] | None = None) -> Any:
+    def emit(self, event: str, ctx: dict[str, Any] | None = None,
+             tool_matcher: str | None = None) -> Any:
+        """触发事件，按顺序通知所有 hook。
+
+        tool_matcher: 当前工具名（before/after_tool_call 事件传入），用于 matcher 过滤
+        """
         ctx = {} if ctx is None else ctx
         for hook in self._hooks:
+            # ---- Matcher 过滤：工具级事件按 matcher 过滤 ----
+            if tool_matcher and event in ("before_tool_call", "after_tool_call"):
+                if not hook.matches(tool_matcher):
+                    continue
+
             method = getattr(hook, event, None)
             if method is None:
                 continue
             try:
                 result = method(ctx)
                 if result is not None:
+                    # ---- 处理 HookDecision ----
+                    if isinstance(result, HookDecision):
+                        if result.action == "allow":
+                            # allow 不短路，继续执行后续 hook
+                            if result.updated_input:
+                                ctx["input"] = result.updated_input
+                                ctx["_hook_updated_input"] = result.updated_input
+                                ctx["_hook_updated_reason"] = result.reason
+                            continue
+                        # deny/ask/block：短路返回
+                        return result
+                    # 字符串或其他非 None：短路返回（兼容旧行为）
                     return result
             except Exception as exc:
                 print(f"[hook error] {event} in {hook.name or hook.__class__.__name__}: {exc}")
@@ -1005,34 +1124,17 @@ class LoggingHook(Hook):
             print(f"[hook:logging] turn finished in {duration_ms:.1f}ms")
 
 
-class RateLimitHook(Hook):
-    """Before Hook 示例：每 window_sec 秒最多 max_calls 次 LLM 调用。"""
-
-    name = "rate_limit"
-
-    def __init__(self, max_calls: int = 10, window_sec: float = 60.0):
-        self.max_calls = max_calls
-        self.window_sec = window_sec
-        self._timestamps = []
-
-    def before_turn(self, ctx):
-        now = time.monotonic()
-        cutoff = now - self.window_sec
-        self._timestamps = [t for t in self._timestamps if t > cutoff]
-        if len(self._timestamps) >= self.max_calls:
-            return f"Error: rate limit ({self.max_calls} calls per {self.window_sec}s)"
-        self._timestamps.append(now)
-
-
 class ToolAuditHook(Hook):
-    """After Hook 示例：把写类和命令类工具调用记录到 JSONL。"""
+    """After Hook 示例：把写类和命令类工具调用记录到 JSONL。
+
+    matcher 设为 "write_file|run_command"，由 HookRegistry 自动过滤，
+    不再需要在方法内手动判断工具名。"""
 
     name = "tool_audit"
+    matcher = "write_file|run_command"
 
     def after_tool_call(self, ctx):
         name = ctx.get("name", "")
-        if name not in {"write_file", "run_command"}:
-            return
         entry = {
             "ts": datetime.now().isoformat(),
             "tool": name,
@@ -1041,38 +1143,20 @@ class ToolAuditHook(Hook):
         AUDIT_FILE.parent.mkdir(parents=True, exist_ok=True)
         with AUDIT_FILE.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        print(f"[hook:tool_audit] {name} 已审计到 {AUDIT_FILE}")
 
 
-class BlockDangerousCommandHook(Hook):
-    """Before Hook 示例：拦截危险命令。"""
+class ToolPolicyHook(Hook):
+    """Before Hook 示例：统一处理工具调用前的策略。
 
-    name = "block_dangerous"
+    一个 Hook 覆盖教学里最有代表性的 before_tool_call 能力：
+    - allow + updated_input：把演示生产路径改写到沙箱
+    - deny：拒绝敏感文件写入和破坏性命令
+    - ask：高敏感操作交给用户确认
+    """
 
-    DANGEROUS_PATTERNS = [
-        ("rm -rf /", "递归删除根目录"),
-        ("rm -rf ~", "递归删除用户目录"),
-        ("DROP TABLE", "删除数据库表"),
-        ("DROP DATABASE", "删除数据库"),
-        ("mkfs.", "格式化文件系统"),
-        ("dd if=", "直接磁盘写入"),
-        ("> /dev/sda", "覆写磁盘设备"),
-        ("chmod 777 /", "开放根目录权限"),
-        (":(){ :|:& };:", "fork bomb"),
-    ]
-
-    def before_tool_call(self, ctx):
-        if ctx.get("name") != "run_command":
-            return
-        command = ctx.get("input", {}).get("command", "")
-        for pattern, description in self.DANGEROUS_PATTERNS:
-            if pattern in command:
-                return f"Error: dangerous command blocked ({description})"
-
-
-class GuardHook(Hook):
-    """Before Hook 示例：敏感文件写保护。"""
-
-    name = "guard"
+    name = "tool_policy"
+    matcher = "write_file|run_command"
 
     SENSITIVE_PATTERNS = [
         ".env",
@@ -1088,49 +1172,191 @@ class GuardHook(Hook):
         ".aws/credentials",
     ]
 
+    DANGEROUS_PATTERNS = [
+        ("rm -rf /", "递归删除根目录"),
+        ("rm -rf ~", "递归删除用户目录"),
+        ("DROP TABLE", "删除数据库表"),
+        ("DROP DATABASE", "删除数据库"),
+        ("mkfs.", "格式化文件系统"),
+        ("dd if=", "直接磁盘写入"),
+        ("> /dev/sda", "覆写磁盘设备"),
+        ("chmod 777 /", "开放根目录权限"),
+        (":(){ :|:& };:", "fork bomb"),
+    ]
+
+    HIGH_SENSITIVITY = [
+        ("git push", "推送到远程仓库"),
+        ("git commit", "提交代码变更"),
+        ("npm publish", "发布 npm 包"),
+        ("pip install", "安装 Python 依赖"),
+        ("docker build", "构建 Docker 镜像"),
+        ("docker push", "推送 Docker 镜像"),
+        ("kubectl apply", "应用 Kubernetes 配置"),
+        ("terraform apply", "执行 Terraform 变更"),
+    ]
+
+    source_prefix = "demo_production/"
+    target_prefix = "sandbox/demo_production/"
+
+    def _normalize_path(self, path: str) -> str:
+        normalized = str(path).strip().replace("\\", "/")
+        if normalized.startswith("./"):
+            normalized = normalized[2:]
+        return normalized
+
+    def _match_pattern(self, value: str, patterns) -> tuple[str, str] | None:
+        for item in patterns:
+            pattern, description = item if isinstance(item, tuple) else (item, item)
+            if pattern in value:
+                return pattern, description
+        return None
+
+    def _rewrite_path_prefix(self, path: str, source_prefix: str, target_prefix: str) -> str | None:
+        normalized = self._normalize_path(path)
+        if normalized.startswith(source_prefix):
+            return target_prefix + normalized[len(source_prefix):]
+        return None
+
     def before_tool_call(self, ctx):
-        if ctx.get("name") != "write_file":
+        inp = ctx.get("input", {}) or {}
+        if ctx.get("name") == "run_command":
+            command = inp.get("command", "")
+
+            dangerous = self._match_pattern(command, self.DANGEROUS_PATTERNS)
+            if dangerous:
+                pattern, description = dangerous
+                reason = f"危险命令已拦截：{description}（匹配模式：{pattern}）"
+                print(f"[hook:tool_policy] {reason}")
+                return HookDecision(action="deny", reason=reason)
+
+            high_sensitivity = self._match_pattern(command, self.HIGH_SENSITIVITY)
+            if high_sensitivity:
+                _, description = high_sensitivity
+                return HookDecision(
+                    action="ask",
+                    reason=f"需要确认：{description}。命令：{command[:120]}",
+                )
             return
-        path = ctx.get("input", {}).get("path", "")
-        for pattern in self.SENSITIVE_PATTERNS:
-            if pattern in path:
-                return f"Error: writing to sensitive file '{path}' blocked (matched: {pattern})"
+
+        updated_input = None
+        raw_path = str(inp.get("path", ""))
+        path = self._normalize_path(raw_path)
+        new_path = self._rewrite_path_prefix(path, self.source_prefix, self.target_prefix)
+        if new_path:
+            updated_input = dict(inp)
+            updated_input["path"] = new_path
+            path = new_path
+            print(f"[hook:tool_policy] 写入路径已改写：{raw_path} -> {new_path}")
+
+        sensitive = self._match_pattern(path, self.SENSITIVE_PATTERNS)
+        if sensitive:
+            pattern, _ = sensitive
+            reason = f"敏感文件写入已拦截：'{path}'（匹配模式：{pattern}）"
+            print(f"[hook:tool_policy] {reason}")
+            return HookDecision(action="deny", reason=reason)
+
+        if updated_input:
+            return HookDecision(
+                action="allow",
+                reason=f"写入路径已改写到沙箱：{updated_input['path']}",
+                updated_input=updated_input,
+            )
 
 
-class ContextInjectionHook(Hook):
-    """Before Hook 示例：在模型调用前动态注入当前工作目录。"""
+class OutputFormattingHook(Hook):
+    """After Hook 示例：截断过长工具输出，防止上下文污染。
 
-    name = "context_injection"
+    展示 After Hook 的输出改写能力。对应 Claude Code 中通过 additionalContext
+    或 updatedToolOutput 向模型反馈处理后的结果。"""
 
-    def before_turn(self, ctx):
-        extra = (
-            f"\n[系统注入] 当前工作目录: {Path.cwd()}\n"
-            f"[系统注入] 审计日志路径: {AUDIT_FILE}\n"
-        )
-        ctx["system_prompt"] = ctx.get("system_prompt", "") + extra
+    name = "output_format"
+    matcher = "*"  # 匹配所有工具
+
+    def __init__(self, max_output_chars: int = 4000):
+        self.max_output_chars = max_output_chars
+
+    def after_tool_call(self, ctx):
+        output = ctx.get("output", "")
+        if isinstance(output, str) and len(output) > self.max_output_chars:
+            truncated = (
+                output[:self.max_output_chars]
+                + f"\n\n[... 输出已截断，原始共 {len(output)} 字符，"
+                + f"显示前 {self.max_output_chars} 字符]"
+            )
+            ctx["output"] = truncated
+            ctx["_truncated"] = True
+            print(
+                f"[hook:output_format] 输出截断：原始 {len(output)} -> "
+                f"{self.max_output_chars} 字符"
+            )
+
+
+class StopQualityGateHook(Hook):
+    """质量门禁 Hook：在 Agent 准备结束本轮回答时进行基本检查。
+
+    展示 on_stop 事件和 "block" 决策。对应 Claude Code 的 Stop 事件质量门禁模式。"""
+
+    name = "stop_quality_gate"
+
+    def on_stop(self, ctx):
+        reply = ctx.get("reply", "")
+        if ctx.get("retry", 0) >= 1:
+            return
+
+        # 检查回答是否过短（可能是模型截断）
+        if reply and len(reply.strip()) < 10:
+            return HookDecision(
+                action="block",
+                reason="回答似乎不完整（少于10个字符），请检查并重新生成更完整的回复。",
+            )
+
+        # 检查是否有未完成的待办事项——注入提醒上下文
+        todos = ctx.get("todos", TODOS)
+        unfinished = [t for t in todos if t["status"] != "completed"]
+        if unfinished:
+            ctx["_has_unfinished_todos"] = True
+            return HookDecision(
+                action="block",
+                reason="仍有未完成待办，Stop Hook 要求继续执行。",
+            )
 
 
 HOOKS = HookRegistry()
 HOOKS.register(LoggingHook())
-HOOKS.register(RateLimitHook(max_calls=20, window_sec=60))
-HOOKS.register(GuardHook())
-HOOKS.register(BlockDangerousCommandHook())
+HOOKS.register(ToolPolicyHook())
 HOOKS.register(ToolAuditHook())
-HOOKS.register(ContextInjectionHook())
+HOOKS.register(OutputFormattingHook(max_output_chars=4000))
+HOOKS.register(StopQualityGateHook())
 
 
 def execute_main_tool(block) -> str:
-    """主 Agent 工具入口：step12 开始统一经过 before/after tool hooks。"""
+    """主 Agent 工具入口：step12 统一经过 before/after tool hooks。
+
+    流程对应四层模型：
+    - Event: "before_tool_call" / "after_tool_call"
+    - Matcher: 传入 tool_matcher=name，HookRegistry 按 matcher 过滤
+    - Handler: Hook 子类方法
+    - Decision: HookDecision 或字符串返回
+    """
     name = block.name
     tool_ctx = {"name": name, "input": block.input}
-    short = HOOKS.emit("before_tool_call", tool_ctx)
-    if isinstance(short, str):
-        return short
+    decision = HOOKS.emit("before_tool_call", tool_ctx, tool_matcher=name)
+    if isinstance(decision, HookDecision):
+        if decision.is_blocking:
+            return decision.to_message()
+        if decision.action == "ask":
+            if not confirm_hook_decision(decision):
+                return HookDecision(
+                    action="deny",
+                    reason=f"用户未确认高敏感操作：{decision.reason}",
+                ).to_message()
+    elif isinstance(decision, str):
+        return decision
 
     inp = tool_ctx.get("input", block.input)
     start = time.perf_counter()
 
-    if name in ("run_command", "web_fetch", "load_skill"):
+    if name in ("run_command", "web_fetch", "load_skill", "read_file", "write_file", "glob", "grep"):
         output = execute_basic_tool(SimpleNamespace(name=name, input=inp), prefix="")
     elif name == "update_todos":
         output = update_todos(inp.get("todos", []))
@@ -1152,14 +1378,25 @@ def execute_main_tool(block) -> str:
     else:
         output = f"Error: Unknown tool '{name}'"
 
+    if tool_ctx.get("_hook_updated_reason") and isinstance(output, str):
+        output += (
+            "\n[运行时提示] "
+            + tool_ctx["_hook_updated_reason"]
+            + "。请以实际执行参数为准，不要再尝试写回原路径。"
+        )
+
     tool_ctx.update({
         "name": name,
         "input": inp,
         "output": output,
         "duration_ms": (time.perf_counter() - start) * 1000,
     })
-    HOOKS.emit("after_tool_call", tool_ctx)
+    HOOKS.emit("after_tool_call", tool_ctx, tool_matcher=name)
     return tool_ctx.get("output", output)
+
+
+def is_blocking_tool_result(result: str) -> bool:
+    return result.startswith("[HookDecision: 拒绝]") or result.startswith("[HookDecision: 需要确认]")
 
 
 # ============== 主 agent ==============
@@ -1228,16 +1465,22 @@ def build_system_prompt() -> str:
 - 工具名格式：`mcp_{{server_name}}_{{tool_name}}`。
 - 不确定时可调用 `list_mcp_servers` 查看已连接 server 及其工具。
 
-【Hooks 生命周期】
-本 Agent 已启用 Hooks：logging、rate_limit、guard、block_dangerous、tool_audit、context_injection。
-- before_turn 可拦截本轮模型调用，也可修改 system_prompt。
-- before_tool_call 可拒绝工具调用，也可改写工具参数。
-- after_tool_call 可观察或改写工具输出。"""
+【工具执行约定】
+1. 皇上要求写文件、读文件、执行命令、查看目录、调用 MCP 或更新计划时，优先发起对应工具调用；写文件用 write_file，读文件用 read_file，执行命令用 run_command。
+2. 创建或覆盖本地文件必须调用 write_file，不要用 run_command 拼命令完成写入。
+3. 如果工具返回的实际路径与皇上原始路径不同，以工具实际路径为准，不要再尝试复制或写回原始路径。
+4. 不要口头声称已经完成工具动作；需要真实执行时必须调用工具。
+5. 工具返回失败、拒绝或需要确认时，如实向皇上回禀工具结果和原因。
+6. 不要编造工具执行结果。只有工具返回的内容，才算真实执行结果。"""
 
 TOOLS = [
     _TOOL_SCHEMAS["run_command"],
     _TOOL_SCHEMAS["web_fetch"],
     _TOOL_SCHEMAS["load_skill"],
+    _TOOL_SCHEMAS["read_file"],
+    _TOOL_SCHEMAS["write_file"],
+    _TOOL_SCHEMAS["glob"],
+    _TOOL_SCHEMAS["grep"],
     {
         "name": "update_todos",
         "description": (
@@ -1384,6 +1627,7 @@ while True:
     history.append(user_message)
     MEMORY.append_history(user_message)
 
+    stop_gate_retries = 0
     while True:
         turn_ctx = {
             "history": history,
@@ -1392,7 +1636,14 @@ while True:
             "system_prompt": build_system_prompt(),
         }
         short = HOOKS.emit("before_turn", turn_ctx)
-        if isinstance(short, str):
+        if isinstance(short, HookDecision):
+            if short.is_blocking:
+                assistant_message = {"role": "assistant", "content": short.to_message()}
+                history.append(assistant_message)
+                MEMORY.append_history(assistant_message)
+                print(f"[Agent回答]: {short.to_message()}\n")
+                break
+        elif isinstance(short, str):
             assistant_message = {"role": "assistant", "content": short}
             history.append(assistant_message)
             MEMORY.append_history(assistant_message)
@@ -1415,23 +1666,38 @@ while True:
 
         if message.stop_reason != "tool_use":
             reply = next((b.text for b in message.content if b.type == "text"), "")
+            # ---- Stop 质量门禁（s12 新增，对应 Claude Code Stop Hook） ----
+            stop_ctx = {
+                "reply": reply,
+                "history": history,
+                "todos": TODOS,
+                "retry": stop_gate_retries,
+            }
+            gate = HOOKS.emit("on_stop", stop_ctx)
+            if isinstance(gate, HookDecision) and gate.is_blocking and stop_gate_retries < 1:
+                print(f"[hook:stop_quality_gate] {gate.reason}")
+                reminder_message = {
+                    "role": "user",
+                    "content": (
+                        "Stop Hook 阻止本轮结束："
+                        + gate.reason
+                        + "\n请继续完成未完成的步骤。若确实无法继续，请说明原因。"
+                    ),
+                }
+                history.append(reminder_message)
+                MEMORY.append_history(reminder_message)
+                stop_gate_retries += 1
+                continue
+            reply = stop_ctx.get("reply", reply)
+            # ---- 打印回答 ----
             print(f"[Agent回答]: {reply}\n")
             if TODOS:
                 unfinished = [t for t in TODOS if t["status"] != "completed"]
                 if unfinished:
-                    print("[计划尚未办妥，继续执行...]")
+                    print("[计划尚未办妥，Stop Hook 已提醒一次，暂不继续自动追问...]")
                     print(render_todos(TODOS))
                     print()
-                    reminder_message = {
-                        "role": "user",
-                        "content": (
-                            "差事尚未办妥，以下任务仍未完成，请按计划继续执行，"
-                            "并按规矩更新 todolist 状态：\n" + render_todos(TODOS)
-                        )
-                    }
-                    history.append(reminder_message)
-                    MEMORY.append_history(reminder_message)
-                    continue
+                    break
                 print("[最终计划状态 - 全部办妥]")
                 print(render_todos(TODOS))
                 print()
@@ -1482,3 +1748,15 @@ while True:
         tool_message = {"role": "user", "content": tool_results}
         history.append(tool_message)
         MEMORY.append_history(tool_message)
+
+        blocking_results = [
+            r["content"] for r in tool_results
+            if isinstance(r.get("content"), str) and is_blocking_tool_result(r["content"])
+        ]
+        if blocking_results:
+            reply = "奉天承运皇帝诏曰：工具请求被运行时策略拦截，未继续改写或换路径执行。\n\n" + blocking_results[0]
+            assistant_message = {"role": "assistant", "content": reply}
+            history.append(assistant_message)
+            MEMORY.append_history(assistant_message)
+            print(f"[Agent回答]: {reply}\n")
+            break
