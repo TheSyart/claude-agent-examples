@@ -2,30 +2,58 @@
 
 # Claude Agent 教学示例
 
+## 01｜本项目：从零实现 Agent
+
+这是一个用 Python 从零构建 AI Agent 的教学项目。项目核心是 [build-agent-example/](build-agent-example/)：从一次模型调用开始，后续每一步都保留前一步的全部代码和能力，逐步加入循环、history、system prompt、工具、skills、memory、规划、子代理、团队协作、MCP 和 hooks。
+
+这个仓库的重点不是封装一个生产框架，而是把 Agent 的关键组成拆开讲清楚。
+
+| 你会学到 | 对应内容 |
+|----------|----------|
+| Agent 主循环 | 单次调用、连续对话、history、system prompt |
+| Agent 动手能力 | tool use、skills、MCP |
+| Agent 长期能力 | memory、用户画像、compact |
+| Agent 协作能力 | plan、subagent、agent team |
+| Agent 运行边界 | hooks 拦截、改写、审计 |
+
+配套资料包括 [ppt/](ppt/) 讲解页、[bilibili-transcripts/](bilibili-transcripts/) 视频转写稿，以及 `skills/`、`memory/`、`templates/` 演示资源。
+
+---
+
+## 02｜进阶项目推荐：Emperor Agent
+
 <p align="center">
   <img src="assets/readme/emperoragent-wordmark.png" alt="Emperor Agent" width="560" />
 </p>
 
-用 Python 从零构建 AI Agent。项目核心是 [build-agent-example/](build-agent-example/)：从一次模型调用开始，后续每一步都保留前一步的全部代码和能力，逐步加入循环、history、system prompt、工具、skills、memory、规划、子代理、团队协作、MCP 和 hooks。
+学完本项目后，推荐继续看进阶项目：
 
-配套资料包括 [ppt/](ppt/) 讲解页、[bilibili-transcripts/](bilibili-transcripts/) 视频转写稿，以及 `skills/`、`memory/`、`templates/` 演示资源。
+**[TheSyart/emperor-agent](https://github.com/TheSyart/emperor-agent)**
 
-## Emperor Agent 是什么
+Emperor Agent 是一个更完整的本地 Agent 项目，包含 Vue WebUI、多模型供应商、流式对话、tools、skills、memory、token telemetry 等能力。它不是本仓库里的教学 step，也不是本项目的附属代码，而是适合在学完基础后继续拆解的实战项目。
 
-Emperor Agent 是这套课程贯穿始终的演示 Agent 人设：用户是“皇上”，Agent 是“大内太监总管”，回答以“奉天承运皇帝诏曰”开头。
+两者关系很简单：
 
-它不是额外的完整框架，也不是根目录里的独立 Agent 运行时，而是 `build-agent-example/code/` 里一步步堆叠出来的教学主角：
+| 项目 | 定位 |
+|------|------|
+| 本项目 | 从零讲清楚 Agent 的基础零件 |
+| Emperor Agent | 把这些零件组织成更完整的本地 Agent 项目 |
 
-- 从 `step04_system_prompt.py` 开始有宫廷人设和稳定 system prompt；
-- 从 `step05_tool_use.py` 开始能真实调用工具办差；
-- 从 `step06_skills.py` 开始能按需加载技能；
-- 从 `step07_memory_system.py` 开始有长期记忆和用户画像；
-- 从 `step09_subagent.py` 开始能派“小太监”子代理；
-- 从 `step10_agent_team.py` 开始有固定队友和 inbox；
-- 从 `step11_mcp.py` 开始接入外部 MCP 工具；
-- 从 `step12_hooks.py` 开始在关键流程边界加入 Hooks 检查点。
+建议先跟完本项目的 `step01` 到 `step12`，再去看 Emperor Agent 如何组织界面、模型、工具、skills、记忆和运行边界。
 
-所以这个项目真正演示的是：一个有角色、有工具、有记忆、有团队、有外部工具协议、有运行时检查点的 Emperor Agent，是如何从最小模型调用一步步长出来的。
+---
+
+## 03｜本项目内容指引
+
+| 你想做什么 | 看哪里 |
+|------------|--------|
+| 先把代码跑起来 | [快速开始](#快速开始) |
+| 按课程顺序学习 | [教学主线](#教学主线) |
+| 查项目文件位置 | [目录结构](#目录结构) |
+| 理解 memory 演示 | [记忆资源](#记忆资源) |
+| 理解 skills 演示 | [Skills 系统](#skills-系统) |
+| 录课或复习讲解 | [配套 PPT](#配套-ppt) 和 [视频转写稿](#视频转写稿) |
+| 关注后续内容 | README 底部的 B 站和抖音二维码 |
 
 ## 快速开始
 
