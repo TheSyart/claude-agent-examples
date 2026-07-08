@@ -58,32 +58,35 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 .art-card:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,11,20,.18),transparent 45%,rgba(5,11,20,.16));pointer-events:none}
 
 /* cover */
-#s0 .wrap{position:relative;z-index:10;display:grid;grid-template-columns:1fr 30vw;height:100%}
+#s0 .wrap{position:relative;z-index:10;display:grid;grid-template-columns:1fr 28vw;height:100%}
 #s0 .left{display:flex;flex-direction:column;justify-content:center;padding:4vw 3vw 4vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
 #s0 .chip-top{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:.12em;color:#22C55E;margin-bottom:1.6vw}
 #s0 .chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E}
 #s0.slide.active .chip-dot{animation:blink 1.8s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
-#s0 .h1{font-size:4.45vw;font-weight:900;line-height:1.02;letter-spacing:-.03em;color:#F8FAFC;margin-bottom:.5vw}
-#s0 .h1 .a{color:#22C55E}#s0 .h1 .b{color:#22D3EE}#s0 .h1 .sep{color:#1E3A2A}
-#s0 .subtitle{font-size:1.05vw;color:#4B6741;margin-bottom:2.2vw;font-family:'JetBrains Mono',monospace}
+#s0 .h1{font-size:6.5vw;font-weight:900;line-height:.95;letter-spacing:-.03em;color:#F8FAFC;margin-bottom:.3vw}
+#s0 .h1-green{font-size:6.5vw;font-weight:900;line-height:.95;letter-spacing:-.03em;background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2.5vw}
 #s0 .terminal{max-width:40vw}
 #s0 .term-body{font-size:.9vw;line-height:2}
+#s0 .l{display:flex;gap:1vw;align-items:baseline}
+#s0 .ln{color:#1E3A2A;width:1vw;flex-shrink:0;font-size:.75vw;user-select:none}
+#s0 .kw{color:#6366F1}#s0 .fn{color:#22C55E}#s0 .cm{color:#1E3A2A;font-style:italic}#s0 .va{color:#E2E8F0}#s0 .st{color:#FB923C}
 #s0 .cursor{display:inline-block;width:.6vw;height:1.1vw;background:#22C55E;margin-left:2px;vertical-align:middle}
 #s0.slide.active .cursor{animation:cur 1.1s step-end infinite}
 @keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
 #s0 .right{display:flex;flex-direction:column;justify-content:center;padding:3vw 3vw 3vw 2.5vw}
 #s0 .sec-label{font-family:'JetBrains Mono',monospace;font-size:.68vw;letter-spacing:.16em;color:#1E3A2A;margin-bottom:1.4vw}
-#s0 .step{display:flex;align-items:center;gap:1vw;padding:.8vw 1.1vw;border-radius:.5vw;margin-bottom:.6vw;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.015)}
-#s0 .step.g{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.05)}
-#s0 .step.c{border-color:rgba(34,211,238,.28);background:rgba(34,211,238,.05)}
-#s0 .step.o{border-color:rgba(251,146,60,.28);background:rgba(251,146,60,.05)}
-#s0 .ico{width:2.2vw;height:2.2vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.8vw;font-weight:700}
-#s0 .step.g .ico{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#22C55E}
-#s0 .step.c .ico{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.3);color:#22D3EE}
-#s0 .step.o .ico{background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3);color:#FB923C}
-#s0 .sname{font-size:1vw;font-weight:700;color:#E2E8F0;line-height:1.1;margin-bottom:.2vw}
-#s0 .shint{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#475569}
+#s0 .step{display:flex;align-items:center;gap:1vw;padding:.8vw 1.1vw;border-radius:.5vw;margin-bottom:.5vw;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.015);position:relative}
+#s0 .step.hi{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.05);box-shadow:0 0 1.5vw rgba(34,197,94,.05)}
+#s0 .step:not(:last-child)::after{content:'';position:absolute;left:1.9vw;bottom:-.55vw;width:1px;height:.55vw;background:rgba(255,255,255,.06)}
+#s0 .step.hi:not(:last-child)::after{background:rgba(34,197,94,.2)}
+#s0 .ico{width:1.9vw;height:1.9vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.72vw;font-weight:700;background:rgba(255,255,255,.04);color:#334155;border:1px solid rgba(255,255,255,.06)}
+#s0 .step.hi .ico{background:rgba(34,197,94,.12);color:#22C55E;border-color:rgba(34,197,94,.3);box-shadow:0 0 .8vw rgba(34,197,94,.15)}
+#s0 .sname{font-size:.95vw;font-weight:600;color:#64748B;line-height:1;margin-bottom:.2vw}
+#s0 .step.hi .sname{color:#E2E8F0}
+#s0 .shint{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#1A2E1E}
+#s0 .step.hi .shint{color:#1E5C2A}
+#s0 .badge{font-family:'JetBrains Mono',monospace;font-size:.62vw;font-weight:700;padding:.2vw .5vw;border-radius:.3vw;background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2);letter-spacing:.08em}
 #s0 .footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;align-items:center;justify-content:space-between;z-index:20;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#0F2A18}
 #s0 .footer span{color:#166534}
 
@@ -222,28 +225,30 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
   <div class="wrap">
     <div class="left">
-      <div class="chip-top"><div class="chip-dot"></div>AGENT 进阶 &nbsp;·&nbsp; 第八期</div>
-      <div class="h1"><span class="a">Hooks</span><span class="sep"> · </span><span class="b">检查挂点</span></div>
-      <div class="subtitle">// 给 Agent 主流程加一排安检点</div>
+      <div class="chip-top"><div class="chip-dot"></div>AGENT RUNTIME &nbsp;·&nbsp; HOOKS &nbsp;·&nbsp; CHECKPOINTS</div>
+      <div class="h1">Agent</div>
+      <div class="h1-green">Hooks</div>
       <div class="terminal">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">一句话记住 Hook</div></div>
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">step12_hooks.py — python</div></div>
         <div class="term-body">
-          <div><span class="t-g">Hook</span><span style="color:#E2E8F0"> = 主流程上预留的挂点</span></div>
-          <div><span class="t-c">Registry</span><span style="color:#E2E8F0"> = 挂规则卡的架子</span></div>
-          <div><span class="t-o">Runner</span><span style="color:#E2E8F0"> = Agent 过站时自动触发</span></div>
-          <div><span class="t-i">Decision</span><span style="color:#E2E8F0">= 放行、改写、拦截、询问</span><span class="cursor"></span></div>
+          <div class="l"><span class="ln">1</span><span class="cm"># 给 Agent 主流程加检查挂点</span></div>
+          <div class="l"><span class="ln">2</span><span class="va">registry</span><span class="kw">.</span><span class="fn">register</span><span class="va">(ToolPolicyHook())</span></div>
+          <div class="l"><span class="ln">3</span><span class="va">decision </span><span class="kw">= </span><span class="va">hooks</span><span class="kw">.</span><span class="fn">emit</span><span class="va">(</span><span class="st">"before_tool_call"</span><span class="va">, ctx)</span></div>
+          <div class="l"><span class="ln">4</span><span class="kw">if </span><span class="va">decision:</span></div>
+          <div class="l"><span class="ln">5</span><span class="va">&nbsp;&nbsp;</span><span class="kw">return </span><span class="va">decision</span></div>
+          <div class="l"><span class="ln">6</span><span class="va">output </span><span class="kw">= </span><span class="fn">run_tool</span><span class="va">(ctx)</span><span class="cursor"></span></div>
         </div>
       </div>
     </div>
     <div class="right">
-      <div class="sec-label">// 这一期看啥</div>
-      <div class="step g"><div class="ico">01</div><div><div class="sname">钩子到底像什么</div><div class="shint">生活挂钩 -> 流程挂点</div></div></div>
-      <div class="step c"><div class="ico">02</div><div><div class="sname">Agent 为什么需要 Hooks</div><div class="shint">地铁安检线比喻</div></div></div>
-      <div class="step o"><div class="ico">03</div><div><div class="sname">怎么搭起来</div><div class="shint">Hook / Registry / Runner</div></div></div>
-      <div class="step g"><div class="ico">04</div><div><div class="sname">哪些事能拦住</div><div class="shint">审计、改写、拒绝、确认</div></div></div>
+      <div class="sec-label">// THIS EPISODE</div>
+      <div class="step"><div class="ico">01</div><div><div class="sname">Hooks 是什么</div><div class="shint">生活挂钩 -> 流程挂点</div></div></div>
+      <div class="step hi"><div class="ico">02</div><div style="flex:1"><div class="sname">Agent Hooks</div><div class="shint">before / after / stop</div></div><div class="badge">CORE</div></div>
+      <div class="step"><div class="ico">03</div><div><div class="sname">怎么搭起来</div><div class="shint">Hook / Registry / Runner</div></div></div>
+      <div class="step"><div class="ico">04</div><div><div class="sname">能控制什么</div><div class="shint">审计、改写、拒绝、确认</div></div></div>
     </div>
   </div>
-  <div class="footer"><div>Hooks 不是让模型更聪明，而是让流程更可控</div><div>9 页 · 小白版</div></div>
+  <div class="footer"><div>Hook → Registry → Runner → Decision</div><div>9 页 · 小白版</div></div>
 </div>
 
 <div class="slide" id="s1" data-screen-label="02 Hook Meaning">
