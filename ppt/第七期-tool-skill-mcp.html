@@ -55,13 +55,17 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
 #s0 .chip-top{display:inline-flex;align-items:center;gap:0.6vw;font-family:'JetBrains Mono',monospace;font-size:0.82vw;letter-spacing:0.12em;color:#22C55E;margin-bottom:1.6vw}
 #s0 .chip-dot{width:0.5vw;height:0.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E;animation:blink 1.8s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:0.3;box-shadow:none}}
-#s0 .h1{font-size:4.4vw;font-weight:900;line-height:1.02;letter-spacing:-0.03em;color:#F8FAFC;margin-bottom:0.5vw}
-#s0 .h1 .a{color:#22C55E}#s0 .h1 .b{color:#22D3EE}#s0 .h1 .c{color:#FB923C}#s0 .h1 .sep{color:#1E3A2A}
-#s0 .subtitle{font-size:1.05vw;color:#4B6741;margin-bottom:2.2vw;font-family:'JetBrains Mono',monospace}
+#s0 .h1{font-size:6.5vw;font-weight:900;line-height:0.95;letter-spacing:-0.03em;color:#F8FAFC;margin-bottom:0.3vw}
+#s0 .h1-row{font-size:6.5vw;font-weight:900;line-height:0.95;letter-spacing:-0.03em;margin-bottom:2.5vw}
+#s0 .h1-row .skill{background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#s0 .h1-row .mcp{margin-left:1.1vw;background:linear-gradient(120deg,#FB923C,#FDBA74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 #s0 .terminal{background:#020810;border:1px solid rgba(34,197,94,0.18);border-radius:0.7vw;overflow:hidden;max-width:40vw;box-shadow:0 0 3vw rgba(34,197,94,0.06)}
 #s0 .term-bar{display:flex;align-items:center;gap:0.5vw;padding:0.7vw 1vw;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05)}
 #s0 .term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:0.72vw;color:#334155}
 #s0 .term-body{padding:1.2vw 1.4vw;font-family:'JetBrains Mono',monospace;font-size:0.9vw;line-height:2}
+#s0 .l{display:flex;gap:1vw;align-items:baseline}
+#s0 .ln{color:#1E3A2A;width:1vw;flex-shrink:0;font-size:0.75vw;user-select:none}
+#s0 .kw{color:#6366F1}#s0 .fn{color:#22C55E}#s0 .cm{color:#1E3A2A;font-style:italic}#s0 .va{color:#E2E8F0}#s0 .st{color:#FB923C}#s0 .sk{color:#22D3EE}
 #s0 .cursor{display:inline-block;width:0.6vw;height:1.1vw;background:#22C55E;margin-left:2px;vertical-align:middle;animation:cur 1.1s step-end infinite}
 @keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
 #s0 .right{display:flex;flex-direction:column;justify-content:center;padding:3vw 3vw 3vw 2.5vw}
@@ -235,18 +239,20 @@ html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
   <div class="wrap">
     <div class="left">
-      <div class="chip-top"><div class="chip-dot"></div>AGENT 进阶 &nbsp;·&nbsp; 第七期</div>
-      <div class="h1"><span class="a">Tool</span><span class="sep"> · </span><span class="b">Skill</span><span class="sep"> · </span><span class="c">MCP</span></div>
-      <div class="subtitle">// 三个词，一次讲明白</div>
+      <div class="chip-top"><div class="chip-dot"></div>AGENT RUNTIME &nbsp;·&nbsp; TOOL &nbsp;·&nbsp; SKILL &nbsp;·&nbsp; MCP</div>
+      <div class="h1">Tool</div>
+      <div class="h1-row"><span class="skill">Skill</span> <span class="mcp">MCP</span></div>
       <div class="terminal">
         <div class="term-bar">
           <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
-          <div class="term-title">一句话记住它仨</div>
+          <div class="term-title">step11_mcp.py — python</div>
         </div>
         <div class="term-body">
-          <div><span style="color:#22C55E">Tool</span><span style="color:#E2E8F0">  = 一台厨具，能真动手</span></div>
-          <div><span style="color:#22D3EE">Skill</span><span style="color:#E2E8F0"> = 一张菜谱，安排做法</span></div>
-          <div><span style="color:#FB923C">MCP</span><span style="color:#E2E8F0">   = 手机线上接单，调外部厨房</span><span class="cursor"></span></div>
+          <div class="l"><span class="ln">1</span><span class="cm"># Skill 负责流程，Tool 负责动手，MCP 负责外援</span></div>
+          <div class="l"><span class="ln">2</span><span class="va">skill </span><span class="kw">= </span><span class="fn">load_skill</span><span class="va">(</span><span class="st">"weekly-report"</span><span class="va">)</span></div>
+          <div class="l"><span class="ln">3</span><span class="va">tools </span><span class="kw">+= </span><span class="fn">load_mcp_tools</span><span class="va">()</span></div>
+          <div class="l"><span class="ln">4</span><span class="sk">tool_call </span><span class="kw">= </span><span class="va">model.decide(skill, tools)</span></div>
+          <div class="l"><span class="ln">5</span><span class="va">result </span><span class="kw">= </span><span class="fn">run_tool</span><span class="va">(tool_call)</span><span class="cursor"></span></div>
         </div>
       </div>
     </div>

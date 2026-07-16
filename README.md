@@ -138,6 +138,7 @@ step07 以后会读取并写入这些文件：
 - [第六期：Agent Team 团队协作](ppt/第六期-agent团队协作.html)
 - [第七期：Tool / Skill / MCP 三者辨析](ppt/第七期-tool-skill-mcp.html)
 - [第八期：Hooks 生命周期](ppt/第八期-hooks生命周期.html)
+- [第九期：目标驱动 Agent](ppt/第九期-目标驱动agent.html)
 
 ## 视频转写稿
 

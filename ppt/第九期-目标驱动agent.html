@@ -1,336 +1,377 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>第九期:目标驱动Agent</title>
+<title>第九期：目标驱动 Agent</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
-
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#050B14;overflow:hidden;font-family:'IBM Plex Sans','PingFang SC',sans-serif;color:#E2E8F0}
+button{font:inherit}
 .deck{position:relative;width:100%;height:100%;overflow:hidden}
 .slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .4s ease}
 .slide.active{opacity:1;pointer-events:all}
 
 .nav{position:fixed;bottom:2vh;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:1.2vw;background:rgba(2,8,16,.85);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px);padding:.6vh 1.4vw;border-radius:999px;z-index:1000}
 .nav-btn{width:2.4vw;height:2.4vw;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9vw;transition:all .2s;user-select:none}
-.nav-btn:hover{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#22C55E}
+.nav-btn:hover,.nav-btn:focus-visible{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#22C55E;outline:none}
 .nav-dots{display:flex;gap:.5vw;align-items:center}
-.nav-dot{width:.5vw;height:.5vw;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;transition:all .2s}
+.nav-dot{width:.5vw;height:.5vw;border:0;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;transition:all .2s}
 .nav-dot.on{background:#22C55E;box-shadow:0 0 6px #22C55E;width:1.4vw;border-radius:3px}
 .nav-count{font-family:'JetBrains Mono',monospace;font-size:.7vw;color:#334155;min-width:3vw;text-align:center}
 
 .bg{position:absolute;inset:0;pointer-events:none}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(34,197,94,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,.03) 1px,transparent 1px);background-size:5vw 5vw}
-.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#4ADE80 40%,#6366F1 70%,#8B5CF6);z-index:50}
+.top-bar{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#22C55E,#22D3EE 40%,#6366F1 70%,#FB923C);z-index:50}
 .glow-l{position:absolute;width:55vw;height:100%;background:radial-gradient(ellipse at left center,rgba(34,197,94,.08) 0%,transparent 60%)}
-.glow-r{position:absolute;width:35vw;height:65%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 65%)}
-.glow-c{position:absolute;width:50vw;height:80vh;top:10%;left:25%;background:radial-gradient(ellipse,rgba(34,197,94,.07) 0%,transparent 65%)}
-.glow-o{position:absolute;width:34vw;height:62vh;right:6%;top:18%;background:radial-gradient(ellipse,rgba(251,146,60,.07) 0%,transparent 68%)}
+.glow-r{position:absolute;width:34vw;height:65%;bottom:-10%;right:-5%;background:radial-gradient(circle,rgba(251,146,60,.07) 0%,transparent 65%)}
+.glow-c{position:absolute;width:60vw;height:80vh;top:10%;left:20%;background:radial-gradient(ellipse,rgba(99,102,241,.06) 0%,transparent 65%)}
+.glow-g{position:absolute;width:58vw;height:80vh;top:10%;left:5%;background:radial-gradient(ellipse,rgba(34,197,94,.07) 0%,transparent 65%)}
+.glow-o{position:absolute;width:55vw;height:80vh;top:12%;left:25%;background:radial-gradient(ellipse,rgba(251,146,60,.06) 0%,transparent 65%)}
 
 .page-id{position:absolute;top:1.8vw;left:3vw;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#1E3A2A;z-index:20}
 .page-id span{color:#22C55E}
-.tag{font-family:'JetBrains Mono',monospace;font-size:.72vw;letter-spacing:0;color:#22C55E;margin-bottom:.8vw}
-.h-main{font-size:3.35vw;font-weight:900;letter-spacing:0;line-height:1.05;color:#F8FAFC;margin-bottom:.6vw}
-.h-main em{font-style:normal;background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.desc{font-size:.92vw;color:#64748B;line-height:1.7;margin-bottom:1.5vw;text-wrap:pretty}
-.file{font-family:'JetBrains Mono',monospace;color:#FB923C}
-.mono{font-family:'JetBrains Mono',monospace}
-
-.chip{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:0;color:#22C55E;margin-bottom:1.4vw}
-.chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E;animation:blink 1.8s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
-
-.badge-g,.badge-i,.badge-o,.badge-dim{font-family:'JetBrains Mono',monospace;font-size:.62vw;font-weight:700;padding:.2vw .5vw;border-radius:.3vw;letter-spacing:0;display:inline-block}
-.badge-g{background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2)}
-.badge-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
-.badge-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.25)}
-.badge-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.06)}
-
-.two-col{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1fr;padding:4vw 4vw 3vw;gap:3vw}
-.two-col.wide-r{grid-template-columns:.86fr 1.14fr}
-.two-col.wide-l{grid-template-columns:1.12fr .88fr}
-.col{display:flex;flex-direction:column;justify-content:center}
-.col.gap{gap:.8vw}
-
-.info-row{display:flex;align-items:flex-start;gap:1vw;padding:.8vw 1vw;border:1px solid rgba(255,255,255,.05);border-radius:.5vw;background:rgba(255,255,255,.015);margin-bottom:.5vw}
-.info-row.hi{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
-.info-row.hi2{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
-.info-row.hi3{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.03)}
-.info-icon{width:2vw;height:2vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;border:1px solid rgba(255,255,255,.08);color:#475569;background:rgba(255,255,255,.04)}
-.info-row.hi .info-icon{background:rgba(34,197,94,.12);color:#22C55E;border-color:rgba(34,197,94,.3);box-shadow:0 0 .8vw rgba(34,197,94,.12)}
-.info-row.hi2 .info-icon{background:rgba(99,102,241,.12);color:#818CF8;border-color:rgba(99,102,241,.3)}
-.info-row.hi3 .info-icon{background:rgba(251,146,60,.1);color:#FB923C;border-color:rgba(251,146,60,.25)}
-.info-name{font-size:.9vw;font-weight:700;color:#94A3B8;margin-bottom:.15vw}
-.info-row.hi .info-name,.info-row.hi2 .info-name,.info-row.hi3 .info-name{color:#E2E8F0}
-.info-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#1E3A2A;line-height:1.55}
-.info-row.hi .info-sub{color:#1E5C2A}.info-row.hi2 .info-sub{color:#3730A3}.info-row.hi3 .info-sub{color:#7C3A11}
-
-.code-card{background:#020810;border:1px solid rgba(255,255,255,.06);border-radius:.7vw;overflow:hidden}
-.code-card.green{border-color:rgba(34,197,94,.2)}.code-card.ind{border-color:rgba(99,102,241,.22)}.code-card.orange{border-color:rgba(251,146,60,.22)}
-.code-card.compact .c-body{font-size:.68vw;line-height:1.68}
-.code-card.micro .c-body{font-size:.63vw;line-height:1.6}
-.c-head{padding:.6vw 1vw;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between}
-.c-label{font-family:'JetBrains Mono',monospace;font-size:.65vw;color:#334155}.c-label.g{color:#22C55E}.c-label.i{color:#818CF8}.c-label.o{color:#FB923C}
-.dots{display:flex;gap:.4vw}.dot{width:.65vw;height:.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
-.c-body{padding:.9vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.78}
-.ln{color:#1E3A2A;margin-right:.8vw;font-size:.7vw;user-select:none}
-.kw{color:#6366F1}.fn{color:#22C55E}.st{color:#FB923C}.cm{color:#1E3A2A;font-style:italic}.va{color:#E2E8F0}.prop{color:#93C5FD}.num{color:#FBBF24}
-.hl{background:rgba(34,197,94,.06);border-left:2px solid #22C55E;display:block;padding-left:.4vw;margin-left:-.4vw;border-radius:0 3px 3px 0}
-
-.flow-col{display:flex;flex-direction:column}
-.frow{display:flex;align-items:stretch;gap:.8vw}
-.frow-left{display:flex;flex-direction:column;align-items:center;width:2.2vw;flex-shrink:0}
-.frow-icon{width:2.2vw;height:2.2vw;border-radius:.4vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;flex-shrink:0}
-.frow-line{flex:1;width:1px;margin:.2vw 0}
-.fi-g{background:rgba(34,197,94,.12);color:#22C55E;border:1px solid rgba(34,197,94,.25)}
-.fi-i{background:rgba(99,102,241,.12);color:#818CF8;border:1px solid rgba(99,102,241,.25)}
-.fi-o{background:rgba(251,146,60,.1);color:#FB923C;border:1px solid rgba(251,146,60,.2)}
-.fi-dim{background:rgba(255,255,255,.04);color:#475569;border:1px solid rgba(255,255,255,.08)}
-.fl-g{background:rgba(34,197,94,.2)}.fl-i{background:rgba(99,102,241,.2)}.fl-dim{background:rgba(255,255,255,.06)}
-.frow-body{flex:1;padding:.6vw 0;display:flex;flex-direction:column;justify-content:center}
-.frow-name{font-size:.88vw;font-weight:700;color:#E2E8F0;margin-bottom:.15vw}.frow-name.dim{color:#64748B}
-.frow-sub{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#22613A;line-height:1.55}.frow-sub.dim{color:#1A2E1E}
-
-.mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:1vw;width:100%}
-.mod-card{border-radius:.6vw;padding:1.1vw 1.3vw;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.015)}
-.mod-card.g{border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.04)}
-.mod-card.i{border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.04)}
-.mod-card.o{border-color:rgba(251,146,60,.2);background:rgba(251,146,60,.04)}
-.mod-card.s{border-color:rgba(34,211,238,.2);background:rgba(34,211,238,.04)}
-.mod-file{font-family:'JetBrains Mono',monospace;font-size:.6vw;letter-spacing:0;color:#334155;margin-bottom:.35vw;text-transform:uppercase}
-.mod-name{font-size:.95vw;font-weight:700;color:#E2E8F0;margin-bottom:.55vw}
-.mod-card.g .mod-name{color:#4ADE80}.mod-card.i .mod-name{color:#818CF8}.mod-card.o .mod-name{color:#FB923C}.mod-card.s .mod-name{color:#22D3EE}
-.mod-sub{font-size:.72vw;color:#64748B;line-height:1.6}
-
+.tag{font-family:'JetBrains Mono',monospace;font-size:.72vw;letter-spacing:.14em;color:#22C55E;margin-bottom:.8vw}
+.desc{font-size:.95vw;color:#64748B;line-height:1.7;margin-bottom:1.35vw;text-wrap:pretty}
+.h-big{font-size:3.2vw;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#F8FAFC}
+.h-mid{font-size:2.45vw;font-weight:900;letter-spacing:-.02em;line-height:1.12;color:#F8FAFC}
+.grad-g{background:linear-gradient(120deg,#22C55E,#4ADE80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-c{background:linear-gradient(120deg,#22D3EE,#67E8F9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.grad-o{background:linear-gradient(120deg,#FB923C,#FDBA74);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.t-g{color:#22C55E}.t-c{color:#22D3EE}.t-o{color:#FB923C}.t-i{color:#818CF8}
+.note-box{display:flex;align-items:flex-start;gap:.8vw;padding:.9vw 1.1vw;background:rgba(34,197,94,.04);border:1px solid rgba(34,197,94,.18);border-radius:.5vw;border-left:3px solid #22C55E}
+.note-icon{font-family:'JetBrains Mono',monospace;font-size:.65vw;font-weight:700;color:#22C55E;flex-shrink:0;margin-top:.1vw}
+.note-text{font-size:.86vw;color:#4B6741;line-height:1.6}
+.note-text strong{color:#22C55E}
+.dot{width:.65vw;height:.65vw;border-radius:50%}.dot-r{background:#FF5F57}.dot-y{background:#FEBC2E}.dot-g{background:#28C840}
 .terminal{background:#020810;border:1px solid rgba(34,197,94,.18);border-radius:.7vw;overflow:hidden;box-shadow:0 0 3vw rgba(34,197,94,.06)}
 .term-bar{display:flex;align-items:center;gap:.5vw;padding:.7vw 1vw;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05)}
-.term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#334555}
-.term-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono',monospace;font-size:.78vw;line-height:1.95;color:#64748B}
-.prompt{color:#22C55E}.out{color:#94A3B8}.warn{color:#FB923C}.dim{color:#334155}
+.term-title{margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#334155}
+.term-body{padding:1.1vw 1.3vw;font-family:'JetBrains Mono','PingFang SC',monospace;font-size:.82vw;line-height:1.95;color:#64748B}
+.prompt{color:#22C55E}.out{color:#94A3B8}.warn{color:#FB923C}.dim{color:#334155}.ok{color:#22D3EE}
+.art-card{position:relative;border-radius:.72vw;overflow:hidden;border:1px solid rgba(255,255,255,.07);background:#020810;box-shadow:0 0 3vw rgba(34,197,94,.055)}
+.art-card img{display:block;width:100%;height:100%;object-fit:contain;filter:saturate(1.04) contrast(1.04)}
+.art-card:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,11,20,.18),transparent 45%,rgba(5,11,20,.16));pointer-events:none}
 
-.cover-wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 26vw}
-.cover-left{display:flex;flex-direction:column;justify-content:center;padding:3.5vw 3vw 3.5vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
-.cover-title{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;color:#F8FAFC;margin-bottom:.4vw}
-.cover-green{font-size:5.2vw;font-weight:900;line-height:.98;letter-spacing:0;background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.35vw}
-.cover-right{display:flex;flex-direction:column;justify-content:center;padding:3vw 2.5vw}
-.footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:.7vw;color:#1E3A2A;z-index:20}
-.footer span{color:#166534}
+/* S0 封面：沿用第八期 1fr + 28vw 结构 */
+#s0 .wrap{position:relative;z-index:10;display:grid;grid-template-columns:1fr 28vw;height:100%}
+#s0 .left{display:flex;flex-direction:column;justify-content:center;padding:4vw 3vw 4vw 5vw;border-right:1px solid rgba(34,197,94,.08)}
+#s0 .chip-top{display:inline-flex;align-items:center;gap:.6vw;font-family:'JetBrains Mono',monospace;font-size:.82vw;letter-spacing:.12em;color:#22C55E;margin-bottom:1.6vw}
+#s0 .chip-dot{width:.5vw;height:.5vw;background:#22C55E;border-radius:50%;box-shadow:0 0 6px #22C55E}
+#s0.slide.active .chip-dot{animation:blink 1.8s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 6px #22C55E}50%{opacity:.3;box-shadow:none}}
+#s0 .h1{font-size:6.5vw;font-weight:900;line-height:.95;letter-spacing:-.03em;color:#F8FAFC;margin-bottom:.3vw}
+#s0 .h1-green{font-size:6.5vw;font-weight:900;line-height:.95;letter-spacing:-.03em;background:linear-gradient(120deg,#22C55E,#4ADE80 60%,#86EFAC);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2.5vw}
+#s0 .terminal{max-width:40vw}
+#s0 .term-body{font-size:.9vw;line-height:2}
+#s0 .l{display:flex;gap:1vw;align-items:baseline}
+#s0 .ln{color:#1E3A2A;width:1vw;flex-shrink:0;font-size:.75vw;user-select:none}
+#s0 .kw{color:#6366F1}#s0 .fn{color:#22C55E}#s0 .cm{color:#1E3A2A;font-style:italic}#s0 .va{color:#E2E8F0}#s0 .st{color:#FB923C}
+#s0 .cursor{display:inline-block;width:.6vw;height:1.1vw;background:#22C55E;margin-left:2px;vertical-align:middle}
+#s0.slide.active .cursor{animation:cur 1.1s step-end infinite}
+@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
+#s0 .right{display:flex;flex-direction:column;justify-content:center;padding:3vw 3vw 3vw 2.5vw}
+#s0 .sec-label{font-family:'JetBrains Mono',monospace;font-size:.68vw;letter-spacing:.16em;color:#1E3A2A;margin-bottom:1.4vw}
+#s0 .step{display:flex;align-items:center;gap:1vw;padding:.8vw 1.1vw;border-radius:.5vw;margin-bottom:.5vw;border:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.015);position:relative}
+#s0 .step.hi{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.05);box-shadow:0 0 1.5vw rgba(34,197,94,.05)}
+#s0 .step:not(:last-child)::after{content:'';position:absolute;left:1.9vw;bottom:-.55vw;width:1px;height:.55vw;background:rgba(255,255,255,.06)}
+#s0 .step.hi:not(:last-child)::after{background:rgba(34,197,94,.2)}
+#s0 .ico{width:1.9vw;height:1.9vw;border-radius:.4vw;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.72vw;font-weight:700;background:rgba(255,255,255,.04);color:#334155;border:1px solid rgba(255,255,255,.06)}
+#s0 .step.hi .ico{background:rgba(34,197,94,.12);color:#22C55E;border-color:rgba(34,197,94,.3);box-shadow:0 0 .8vw rgba(34,197,94,.15)}
+#s0 .sname{font-size:.95vw;font-weight:600;color:#64748B;line-height:1;margin-bottom:.2vw}
+#s0 .step.hi .sname{color:#E2E8F0}
+#s0 .shint{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#1A2E1E}
+#s0 .step.hi .shint{color:#1E5C2A}
+#s0 .badge{font-family:'JetBrains Mono',monospace;font-size:.62vw;font-weight:700;padding:.2vw .5vw;border-radius:.3vw;background:rgba(34,197,94,.1);color:#22C55E;border:1px solid rgba(34,197,94,.2);letter-spacing:.08em}
+#s0 .footer{position:absolute;bottom:1.5vw;left:5vw;right:3vw;display:flex;align-items:center;justify-content:space-between;z-index:20;font-family:'JetBrains Mono',monospace;font-size:.72vw;color:#0F2A18}
+#s0 .footer span{color:#166534}
+
+/* S1 说完成不算 */
+#s1 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.9fr 1.1fr;padding:4vw 4vw 3vw;gap:3vw}
+#s1 .left,#s1 .right{display:flex;flex-direction:column;justify-content:center}
+#s1 .art-card{height:24vw;border-color:rgba(34,211,238,.18)}
+.map-pair{display:grid;grid-template-columns:1fr 1fr;gap:.9vw;margin-top:1vw}
+.map-card{border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);border-radius:.65vw;padding:1vw}
+.map-card b{display:block;font-size:.98vw;color:#E2E8F0;margin-bottom:.35vw}
+.map-card span{font-size:.78vw;line-height:1.55;color:#64748B}
+.map-card.old{border-color:rgba(251,146,60,.24);background:rgba(251,146,60,.035)}
+.map-card.old b{color:#FB923C}
+.map-card.new{border-color:rgba(34,197,94,.24);background:rgba(34,197,94,.035)}
+.map-card.new b{color:#22C55E}
+
+/* S2 三件事 */
+#s2 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.95fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s2 .left,#s2 .right{display:flex;flex-direction:column;justify-content:center}
+#s2 .art-card{height:19vw;border-color:rgba(34,197,94,.2);margin-bottom:1vw}
+.question-list{display:flex;flex-direction:column;gap:.65vw;margin-top:.4vw}
+.question{display:grid;grid-template-columns:2.2vw 1fr;align-items:center;gap:.8vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018);border-radius:.55vw;padding:.62vw .78vw}
+.question-no{width:2.2vw;height:2.2vw;border-radius:.42vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.62vw;color:#22C55E;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25)}
+.question b{display:block;font-size:.86vw;color:#E2E8F0;margin-bottom:.12vw}
+.question span{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#475569}
+
+/* S3 四步循环 */
+#s3 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+#s3 .art-card{width:46vw;height:auto;aspect-ratio:1672/941;border-color:rgba(34,211,238,.18);margin-top:1.2vw}
+.loop-labels{display:grid;grid-template-columns:repeat(4,1fr);gap:.8vw;width:60vw;margin-top:1vw}
+.loop-label{text-align:center;border-top:1px solid rgba(255,255,255,.08);padding-top:.65vw;font-size:.82vw;font-weight:800;color:#64748B}
+.loop-label:nth-child(1){color:#22D3EE;border-color:rgba(34,211,238,.45)}
+.loop-label:nth-child(2){color:#818CF8;border-color:rgba(129,140,248,.45)}
+.loop-label:nth-child(3){color:#FB923C;border-color:rgba(251,146,60,.45)}
+.loop-label:nth-child(4){color:#22C55E;border-color:rgba(34,197,94,.45)}
+
+/* S4 两种自动结束 */
+#s4 .wrap{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3vw 5vw}
+.stop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1vw;align-items:stretch;width:100%;max-width:62vw;margin-top:1.2vw}
+.stop-card{min-height:10.5vw;border-radius:.8vw;padding:1.35vw;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02)}
+.stop-card.g{border-color:rgba(34,197,94,.34);background:rgba(34,197,94,.045)}
+.stop-card.c{border-color:rgba(34,211,238,.34);background:rgba(34,211,238,.045)}
+.stop-no{font-family:'JetBrains Mono',monospace;font-size:.68vw;color:#475569;margin-bottom:.65vw}
+.stop-title{font-size:1.4vw;font-weight:900;color:#E2E8F0;margin-bottom:.5vw}
+.stop-card.g .stop-title{color:#22C55E}.stop-card.c .stop-title{color:#22D3EE}
+.stop-copy{font-size:.82vw;color:#64748B;line-height:1.6}
+.stop-copy strong{color:#E2E8F0}
+.unbounded-note{width:62vw;margin-top:1vw;padding:.8vw 1.1vw;border:1px solid rgba(251,146,60,.3);border-left:3px solid #FB923C;border-radius:.55vw;background:rgba(251,146,60,.045);font-size:.86vw;color:#FDBA74;text-align:center}
+
+/* S5 真实使用 */
+#s5 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:1fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s5 .left,#s5 .right{display:flex;flex-direction:column;justify-content:center}
+#s5 .terminal{border-color:rgba(34,197,94,.2)}
+.demo-rail{display:flex;flex-direction:column;gap:.55vw;margin-top:.9vw}
+.demo-step{display:grid;grid-template-columns:2.2vw 1fr;gap:.75vw;align-items:center;padding:.66vw .75vw;border:1px solid rgba(255,255,255,.07);border-radius:.55vw;background:rgba(255,255,255,.018)}
+.demo-num{width:2.2vw;height:2.2vw;border-radius:.45vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.62vw;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#22C55E}
+.demo-title{font-size:.82vw;font-weight:800;color:#E2E8F0;margin-bottom:.1vw}
+.demo-sub{font-family:'JetBrains Mono',monospace;font-size:.58vw;color:#475569;line-height:1.45}
+
+/* S6 总结 */
+#s6 .wrap{position:relative;z-index:10;height:100%;display:grid;grid-template-columns:.95fr 1.05fr;padding:4vw 4vw 3vw;gap:3vw}
+#s6 .left,#s6 .right{display:flex;flex-direction:column;justify-content:center}
+.role-stack{display:flex;flex-direction:column;gap:.75vw;margin-top:1vw}
+.role-card{display:grid;grid-template-columns:2.8vw 1fr;gap:.85vw;align-items:center;padding:.8vw 1vw;border-radius:.6vw;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.015)}
+.role-card.g{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.04)}
+.role-card.c{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.04)}
+.role-card.o{border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.04)}
+.role-icon{width:2.8vw;height:2.8vw;border-radius:.5vw;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.7vw;font-weight:800;border:1px solid rgba(255,255,255,.1);background:#020810}
+.role-card.g .role-icon,.role-card.g .role-name{color:#22C55E}
+.role-card.c .role-icon,.role-card.c .role-name{color:#22D3EE}
+.role-card.o .role-icon,.role-card.o .role-name{color:#FB923C}
+.role-name{font-size:1.05vw;font-weight:900;margin-bottom:.12vw}
+.role-copy{font-size:.78vw;color:#64748B;line-height:1.45}
+.final-line{margin-top:.9vw;padding:.78vw .95vw;border-radius:.55vw;border:1px solid rgba(34,197,94,.18);background:rgba(34,197,94,.035);font-size:.84vw;color:#86EFAC;line-height:1.5;text-align:center}
+
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="deck">
 
-<div class="slide active" id="s0">
+<div class="slide active" id="s0" data-screen-label="01 Cover">
   <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="cover-wrap">
-    <div class="cover-left">
-      <div class="chip"><div class="chip-dot"></div>第九期 · 从被动问答到主动执行</div>
-      <div class="cover-title">Goal</div>
-      <div class="cover-green">目标驱动</div>
-      <div class="desc" style="max-width:39vw">本期的核心句：领旨后自会把差事办妥。用户给出高层目标，Agent 自主拆分目标树、跟踪依赖、推进执行，最终汇总汇报。</div>
-      <div style="display:flex;gap:.5vw;flex-wrap:wrap">
-        <span class="badge-g">目标树</span>
-        <span class="badge-i">依赖管理</span>
-        <span class="badge-o">自主循环</span>
-        <span class="badge-dim">step12_goal.py</span>
-      </div>
-    </div>
-    <div class="cover-right">
-      <div class="info-row hi"><div class="info-icon">拆</div><div><div class="info-name">拆解目标</div><div class="info-sub">update_goals 创建树形子目标</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">推</div><div><div class="info-name">自动推进</div><div class="info-sub">/goal 命令触发多轮自主执行</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">验</div><div><div class="info-name">完成判定</div><div class="info-sub">DONE: 标记 + success_criteria</div></div></div>
-    </div>
-  </div>
-  <div class="footer"><span>第九期</span><span>BUILD AGENT EXAMPLE · 2026</span></div>
-</div>
-
-<div class="slide" id="s1">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 问题 &nbsp;·&nbsp; <span>一问一答太慢了</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">问题定义 · 被动响应的局限</div>
-      <div class="h-main">复杂任务<br><em>需要用户一直催</em></div>
-      <div class="desc">s01-s11 的 Agent 都是被动问答：用户说一句，Agent 回一句。多步骤任务需要用户不断跟进，容易丢上下文。</div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">步骤多</div><div class="info-sub">列出文件 → 读取 → 分析 → 写报告</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">2</div><div><div class="info-name">上下文长</div><div class="info-sub">每轮都要重复目标和已完成的步骤</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">3</div><div><div class="info-name">进度难跟踪</div><div class="info-sub">用户无法直观看到整体进度</div></div></div>
-    </div>
-    <div class="col">
+  <div class="wrap">
+    <div class="left">
+      <div class="chip-top"><div class="chip-dot"></div>AGENT RUNTIME &nbsp;·&nbsp; GOAL &nbsp;·&nbsp; CHECKPOINTS</div>
+      <div class="h1">Agent</div>
+      <div class="h1-green">Goal</div>
       <div class="terminal">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">传统对话</div></div>
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">Goal workflow — tool calls</div></div>
         <div class="term-body">
-          <span class="dim">用户</span>：帮我整理 import<br>
-          <span class="dim">Agent</span>：先列出文件？<br>
-          <span class="dim">用户</span>：好<br>
-          <span class="dim">Agent</span>：文件有这些...<br>
-          <span class="dim">用户</span>：提取每个文件的 import<br>
-          ...<br><br>
-          <span class="warn">理想</span>：用户只说一次目标，Agent 自己跑完
+          <div class="l"><span class="ln">1</span><span class="fn">define_goal_contract</span><span class="va">(...)</span></div>
+          <div class="l"><span class="ln">2</span><span class="fn">update_goal_plan</span><span class="va">(...)</span></div>
+          <div class="l"><span class="ln">3</span><span class="fn">glob</span><span class="va">(...)</span></div>
+          <div class="l"><span class="ln">4</span><span class="fn">run_command</span><span class="va">(...)</span></div>
+          <div class="l"><span class="ln">5</span><span class="fn">record_goal_evidence</span><span class="va">(...)</span></div>
+          <div class="l"><span class="ln">6</span><span class="fn">complete_goal</span><span class="va">()</span><span class="cursor"></span></div>
         </div>
       </div>
     </div>
+    <div class="right">
+      <div class="sec-label">// THIS EPISODE</div>
+      <div class="step"><div class="ico">01</div><div><div class="sname">Goal 是什么</div><div class="shint">一句愿望 → 能检查的目标</div></div></div>
+      <div class="step hi"><div class="ico">02</div><div style="flex:1"><div class="sname">Agent Goal</div><div class="shint">说清、推进、检查</div></div><div class="badge">CORE</div></div>
+      <div class="step"><div class="ico">03</div><div><div class="sname">怎么自己推进</div><div class="shint">看情况 → 选下一步</div></div></div>
+      <div class="step"><div class="ico">04</div><div><div class="sname">什么时候停下</div><div class="shint">完成、求助、人工退出</div></div></div>
+    </div>
   </div>
+  <div class="footer"><div>目标 → 计划 → 检查 → 结果</div><div>7 页 · 小白版</div></div>
 </div>
 
-<div class="slide" id="s2">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 方案 &nbsp;·&nbsp; <span>目标树</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">Goal Tree</div>
-      <div class="h-main">把大目标<br><em>拆成一棵树</em></div>
-      <div class="desc">每个目标有 id、content、status、parent_id、depends_on、success_criteria。Agent 用 `update_goals` 维护这棵树，system prompt 会实时注入当前目标状态。</div>
-      <div class="flow-col">
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-g">根</div><div class="frow-line fl-g"></div></div><div class="frow-body"><div class="frow-name">root</div><div class="frow-sub">高层目标描述</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-i">子</div><div class="frow-line fl-i"></div></div><div class="frow-body"><div class="frow-name">children</div><div class="frow-sub">拆解后的子目标</div></div></div>
-        <div class="frow"><div class="frow-left"><div class="frow-icon fi-o">赖</div></div><div class="frow-body"><div class="frow-name">depends_on</div><div class="frow-sub">前置依赖全部完成才能开始</div></div></div>
+<div class="slide" id="s1" data-screen-label="02 Why Goal">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-o"></div></div>
+  <div class="page-id">// 第 2 页 &nbsp;—&nbsp; <span>为什么需要 Goal</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">先解决一个老问题</div>
+      <div class="h-big">说“做完了”<br><span class="grad-o">不等于真的做完</span></div>
+      <div class="desc">就像装修队说“已经装好了”，你还是会看墙面、开关和水管。Agent 也一样，要用检查结果说话。</div>
+      <div class="map-pair">
+        <div class="map-card old"><b>没有标准</b><span>做到哪算哪，容易提前结束。</span></div>
+        <div class="map-card new"><b>写清标准</b><span>检查通过以后，才算完成。</span></div>
       </div>
     </div>
-    <div class="col">
-      <div class="code-card green compact">
-        <div class="c-head"><span class="c-label g">update_goals 示例</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-{<br>
-&nbsp;&nbsp;<span class="st">"id"</span>: <span class="st">"count_lines"</span>,<br>
-&nbsp;&nbsp;<span class="st">"content"</span>: <span class="st">"统计每个 .py 文件行数"</span>,<br>
-&nbsp;&nbsp;<span class="st">"status"</span>: <span class="st">"pending"</span>,<br>
-&nbsp;&nbsp;<span class="st">"parent_id"</span>: <span class="st">"root"</span>,<br>
-&nbsp;&nbsp;<span class="st">"depends_on"</span>: [<span class="st">"list_files"</span>],<br>
-&nbsp;&nbsp;<span class="st">"success_criteria"</span>: <span class="st">"得到每个文件的行数"</span><br>
-}
-        </div>
-      </div>
-      <div class="desc" style="margin-top:.8vw">状态流转：pending → in_progress → completed / failed。</div>
+    <div class="right">
+      <div class="art-card"><img src="assets/goal/goal-metaphor-checkpoint.png" alt="混乱执行轨道与有明确检查点的执行轨道对比"></div>
+      <div class="note-box" style="margin-top:1vw"><div class="note-icon">记</div><div class="note-text"><strong>不听口头保证，只看能不能检查通过。</strong></div></div>
     </div>
   </div>
 </div>
 
-<div class="slide" id="s3">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 流程 &nbsp;·&nbsp; <span>自主模式</span></div>
-  <div class="two-col wide-r">
-    <div class="col">
-      <div class="tag">/goal 命令</div>
-      <div class="h-main">用户说一次<br><em>Agent 跑到底</em></div>
-      <div class="desc">用户输入 `/goal 统计 src 下所有 .py 文件行数`，AgentLoop 进入 `_run_goal_mode()`，循环推进直到完成或达到上限。</div>
-      <div class="info-row hi"><div class="info-icon">1</div><div><div class="info-name">创建 root goal</div><div class="info-sub">把用户目标作为根节点</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">2</div><div><div class="info-name">重建 system prompt</div><div class="info-sub">注入当前目标树</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">3</div><div><div class="info-name">循环执行</div><div class="info-sub">每轮调用 runner.step()，检查目标状态</div></div></div>
-    </div>
-    <div class="col">
-      <div class="code-card ind compact">
-        <div class="c-head"><span class="c-label i">AgentLoop._run_goal_mode</span><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div></div>
-        <div class="c-body">
-<span class="kw">for</span> turn <span class="kw">in</span> range(max_autonomous_turns):<br>
-&nbsp;&nbsp;reply = runner.step(history)<br>
-&nbsp;&nbsp;<span class="kw">if</span> <span class="st">"DONE:"</span> <span class="kw">in</span> reply:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;goal_store.complete(root_id)<br>
-&nbsp;&nbsp;<span class="kw">if</span> not goal_store.has_pending_or_in_progress():<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">break</span><br>
-&nbsp;&nbsp;history.append({<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="st">"role"</span>: <span class="st">"user"</span>,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="st">"content"</span>: <span class="st">"继续推进目标..."</span><br>
-&nbsp;&nbsp;})
-        </div>
+<div class="slide" id="s2" data-screen-label="03 Three Questions">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div></div>
+  <div class="page-id">// 第 3 页 &nbsp;—&nbsp; <span>怎么把目标说清楚</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">不用写一大篇</div>
+      <div class="h-big">一个目标<br><span class="grad-g">说清 3 件事</span></div>
+      <div class="desc">说结果，讲边界，再给一个能看到结果的检查办法。</div>
+      <div class="question-list">
+        <div class="question"><div class="question-no">1</div><div><b>最后要看到什么</b><span>说结果，不用替 Agent 写每一步。</span></div></div>
+        <div class="question"><div class="question-no">2</div><div><b>哪些能做，哪些不能动</b><span>把范围和不能碰的地方讲清楚。</span></div></div>
+        <div class="question"><div class="question-no">3</div><div><b>怎么确认已经完成</b><span>给出能运行、能看到结果的检查办法。</span></div></div>
       </div>
+    </div>
+    <div class="right">
+      <div class="art-card"><img src="assets/goal/goal-three-questions.png" alt="目标、边界和完成检查三个发光模块"></div>
+      <div class="note-box"><div class="note-icon">例</div><div class="note-text"><strong>/goal 只读统计当前目录里的所有 Python 文件，列出行数，并用可复核命令证明哪个最长</strong></div></div>
     </div>
   </div>
 </div>
 
-<div class="slide" id="s4">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-l"></div><div class="glow-r"></div></div>
-  <div class="page-id">// 对比 &nbsp;·&nbsp; <span>Todolist vs Goal</span></div>
-  <div class="two-col">
-    <div class="col">
-      <div class="tag">Todolist</div>
-      <div class="h-main"><em>单轮内</em><br>步骤管理</div>
-      <div class="mod-grid">
-        <div class="mod-card g"><div class="mod-name">平级列表</div><div class="mod-sub">同一轮对话里的待办项</div></div>
-        <div class="mod-card g"><div class="mod-name">内存存储</div><div class="mod-sub">不跨会话保留</div></div>
-        <div class="mod-card g"><div class="mod-name">模型维护</div><div class="mod-sub">随时 update_todos</div></div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="tag">Goal</div>
-      <div class="h-main"><em>跨多轮</em><br>目标驱动</div>
-      <div class="mod-grid">
-        <div class="mod-card i"><div class="mod-name">树形结构</div><div class="mod-sub">parent_id / depends_on</div></div>
-        <div class="mod-card i"><div class="mod-name">持久化</div><div class="mod-sub">memory/goals.jsonl</div></div>
-        <div class="mod-card i"><div class="mod-name">用户触发</div><div class="mod-sub">/goal 进入自主模式</div></div>
-      </div>
-    </div>
+<div class="slide" id="s3" data-screen-label="04 Four Steps">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div></div>
+  <div class="page-id">// 第 4 页 &nbsp;—&nbsp; <span>Agent 怎么自己推进</span></div>
+  <div class="wrap">
+    <div class="tag">每轮推进一个计划步骤</div>
+    <div class="h-big" style="text-align:center">Agent 每一轮<br><span class="grad-c">做这 4 件事</span></div>
+    <div class="desc" style="text-align:center;max-width:58vw">同一时间推进一个计划步骤；步骤内部可以连续调用多个工具。检查没通过，就调整做法再来一轮。</div>
+    <div class="art-card"><img src="assets/goal/goal-simple-loop.png" alt="看情况、选下一步、动手做和检查结果组成的四站循环"></div>
+    <div class="loop-labels"><div class="loop-label">看情况</div><div class="loop-label">选下一步</div><div class="loop-label">动手做</div><div class="loop-label">检查结果</div></div>
   </div>
 </div>
 
-<div class="slide" id="s5">
-  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-c"></div><div class="glow-o"></div></div>
-  <div class="page-id">// 动手 &nbsp;·&nbsp; <span>试一试</span></div>
-  <div class="two-col wide-l">
-    <div class="col">
-      <div class="tag">Try it</div>
-      <div class="h-main">一个命令<br><em>跑完全程</em></div>
-      <div class="desc">`step12_goal.py` 在 step11 基础上加了 GoalStore 和 `/goal` 命令。运行后输入目标，观察 Agent 自主拆解和执行。</div>
+<div class="slide" id="s4" data-screen-label="05 Stop Results">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-o"></div></div>
+  <div class="page-id">// 第 5 页 &nbsp;—&nbsp; <span>什么时候停下来</span></div>
+  <div class="wrap">
+    <div class="tag">停下来也要有理由</div>
+    <div class="h-big" style="text-align:center">自动结束<br><span class="grad-g">只有 2 种结果</span></div>
+    <div class="desc" style="text-align:center;max-width:52vw">完成检查通过，或者碰到必须由你决定的事情。</div>
+    <div class="stop-grid">
+      <div class="stop-card g"><div class="stop-no">01</div><div class="stop-title">做完了</div><div class="stop-copy">计划中的事情做完，所有检查都通过。</div></div>
+      <div class="stop-card c"><div class="stop-no">02</div><div class="stop-title">需要你决定</div><div class="stop-copy">缺权限、缺信息，或者下一步风险太高。</div></div>
+    </div>
+    <div class="unbounded-note">没有预设轮数上限；用户可随时按 <strong>Ctrl+C</strong> 退出。</div>
+  </div>
+</div>
+
+<div class="slide" id="s5" data-screen-label="06 Goal Demo">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div></div>
+  <div class="page-id">// 第 6 页 &nbsp;—&nbsp; <span>真正跑一次</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">打开以后直接说目标</div>
+      <div class="h-big">真正使用<br>只要一句 <span class="grad-g">/goal</span></div>
+      <div class="desc">你给出目标，Agent 会先把标准说清楚，再自己安排步骤。</div>
+      <div class="demo-rail">
+        <div class="demo-step"><div class="demo-num">1</div><div><div class="demo-title">启动示例</div><div class="demo-sub">进入第十三步的交互程序</div></div></div>
+        <div class="demo-step"><div class="demo-num">2</div><div><div class="demo-title">输入目标</div><div class="demo-sub">结果和检查办法写在一句话里</div></div></div>
+        <div class="demo-step"><div class="demo-num">3</div><div><div class="demo-title">随时查看</div><div class="demo-sub">用 /goals 看进度和检查结果</div></div></div>
+      </div>
+    </div>
+    <div class="right">
       <div class="terminal">
-        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">Terminal</div></div>
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">step13_goal.py</div></div>
         <div class="term-body">
-          <span class="prompt">$</span> python build-agent-example/code/step12_goal.py<br><br>
-          <span class="dim">你：</span>/goal 统计当前目录下所有 .py 文件行数，告诉我哪个最长<br>
-          <span class="out">[目标模式 第 1/10 轮]</span><br>
-          <span class="out">[工具调用]: update_goals</span><br>
-          <span class="out">[工具调用]: glob</span><br>
-          <span class="out">[工具调用]: run_command</span><br>
-          <span class="out">奉天承运皇帝诏曰... DONE: 最长文件是 step12_goal.py</span>
+          <span class="prompt">$</span> python3 build-agent-example/code/step13_goal.py<br><br>
+          <span class="prompt">›</span> /goal 只读统计当前目录里的所有 Python 文件，列出行数，并用可复核命令证明哪个最长<br><br>
+          <span class="dim">[目标模式 第 1 轮 · 无预设上限]</span><br><br>
+          <span class="prompt">›</span> /goals<br><br>
+          <span class="out">状态: in_progress</span><br>
+          <span class="out">Outcome: 只读统计 Python 文件……</span><br>
+          <span class="out">Contract: locked</span><br>
+          <span class="out">执行计划: 2 项</span><br>
+          <span class="out">验收证据: AC-1 PASS</span><br>
+          <span class="ok">已推进轮次: 3（无预设上限）</span>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="tag">能力地图</div>
-      <div class="h-main">s01 → s12<br><em>完整覆盖</em></div>
-      <div class="desc">到本期为止，仓库已覆盖现代 Agent 的核心能力：记忆、工具、技能、规划、子代理、团队、MCP、Hooks、目标驱动。</div>
-      <div class="info-row hi"><div class="info-icon">记</div><div><div class="info-name">Memory</div><div class="info-sub">工作 / 情景 / 长期三层记忆</div></div></div>
-      <div class="info-row hi2"><div class="info-icon">工</div><div><div class="info-name">Tools</div><div class="info-sub">内置 + MCP + 并发执行</div></div></div>
-      <div class="info-row hi3"><div class="info-icon">智</div><div><div class="info-name">Autonomy</div><div class="info-sub">目标树 + 自主推进</div></div></div>
+  </div>
+</div>
+
+<div class="slide" id="s6" data-screen-label="07 Recap">
+  <div class="bg"><div class="grid"></div><div class="top-bar"></div><div class="glow-g"></div><div class="glow-r"></div></div>
+  <div class="page-id">// 第 7 页 &nbsp;—&nbsp; <span>最后记住这些</span></div>
+  <div class="wrap">
+    <div class="left">
+      <div class="tag">到这里就够用了</div>
+      <div class="h-big">记住这<br><span class="grad-g">3 句话</span></div>
+      <div class="desc">命令以后可以慢慢练，先把这三个判断记住。</div>
+      <div class="role-stack">
+        <div class="role-card g"><div class="role-icon">01</div><div><div class="role-name">目标写结果</div><div class="role-copy">不替 Agent 写每一步。</div></div></div>
+        <div class="role-card c"><div class="role-icon">02</div><div><div class="role-name">做完看检查</div><div class="role-copy">不听一句口头保证。</div></div></div>
+        <div class="role-card o"><div class="role-icon">03</div><div><div class="role-name">做不下去就问人</div><div class="role-copy">缺权限、缺信息就停下来。</div></div></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="tag">一句话收尾</div>
+      <div class="h-big">Goal 是一份<br><span class="grad-c">能检查的目标</span></div>
+      <div class="desc">终点讲清楚，完成标准摆出来，Agent 才能放心地自己往前跑。</div>
+      <div class="terminal">
+        <div class="term-bar"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><div class="term-title">白话版</div></div>
+        <div class="term-body" style="font-size:.92vw;line-height:1.8">
+          <span class="prompt">目标写结果</span>，不写每一步。<br>
+          <span class="ok">做没做完</span>，看检查结果。<br>
+          <span class="warn">做不下去</span>，停下来问人。
+        </div>
+      </div>
+      <div class="final-line">证据已绑定工具输出；通过或失败，仍由当前 Agent 登记。</div>
     </div>
   </div>
 </div>
 
 </div>
-
 <div class="nav">
-  <button class="nav-btn" id="prev">‹</button>
+  <button class="nav-btn" id="prev" type="button" aria-label="上一页">←</button>
   <div class="nav-dots" id="dots"></div>
-  <button class="nav-btn" id="next">›</button>
-  <div class="nav-count" id="count">1 / 6</div>
+  <div class="nav-count" id="count">1 / 7</div>
+  <button class="nav-btn" id="next" type="button" aria-label="下一页">→</button>
 </div>
-
 <script>
 const slides = document.querySelectorAll('.slide');
-let idx = 0;
-const dots = document.getElementById('dots');
-slides.forEach((_, i) => {
-  const d = document.createElement('div');
-  d.className = 'nav-dot' + (i === 0 ? ' on' : '');
-  d.addEventListener('click', () => go(i));
-  dots.appendChild(d);
+const dotsEl = document.getElementById('dots');
+const countEl = document.getElementById('count');
+let cur = Number(localStorage.getItem('goal-deck-slide-v7') || 0);
+if (cur < 0 || cur >= slides.length) cur = 0;
+slides.forEach((slide, i) => {
+  slide.classList.toggle('active', i === cur);
+  const dot = document.createElement('button');
+  dot.type = 'button';
+  dot.className = 'nav-dot' + (i === cur ? ' on' : '');
+  dot.setAttribute('aria-label', `跳到第 ${i + 1} 页`);
+  dot.onclick = () => go(i);
+  dotsEl.appendChild(dot);
 });
+countEl.textContent = `${cur + 1} / ${slides.length}`;
 function go(n) {
-  if (n < 0 || n >= slides.length) return;
-  slides[idx].classList.remove('active');
-  dots.children[idx].classList.remove('on');
-  idx = n;
-  slides[idx].classList.add('active');
-  dots.children[idx].classList.add('on');
-  document.getElementById('count').textContent = (idx + 1) + ' / ' + slides.length;
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('on');
+  cur = (n + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  dotsEl.children[cur].classList.add('on');
+  countEl.textContent = `${cur + 1} / ${slides.length}`;
+  localStorage.setItem('goal-deck-slide-v7', String(cur));
 }
-document.getElementById('prev').addEventListener('click', () => go(idx - 1));
-document.getElementById('next').addEventListener('click', () => go(idx + 1));
+document.getElementById('prev').onclick = () => go(cur - 1);
+document.getElementById('next').onclick = () => go(cur + 1);
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ') go(idx + 1);
-  if (e.key === 'ArrowLeft') go(idx - 1);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(cur - 1); }
 });
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+document.addEventListener('touchend', e => {
+  const d = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(d) > 50) d > 0 ? go(cur + 1) : go(cur - 1);
+}, {passive:true});
 </script>
 </body>
 </html>
