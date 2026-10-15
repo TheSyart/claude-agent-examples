@@ -91,27 +91,27 @@ assets/readme/             README 封面、二维码和图片资源
 
 ## 教学主线
 
-教学主线包括基础代码实现和 Computer Use 原理与实战。下表中的 `step01` 到 `step12` 对应代码步骤，Computer Use 对应视频第十期；视频期数和代码步骤独立编号。
+教学主线包括基础代码实现和 Computer Use 原理与实战，下表按学习顺序编号。
 
 `build-agent-example/code/step01` 到 `step12` 采用严格累积写法：后一步保留前一步的全部核心代码和能力，只在此基础上新增一个主题能力。也就是说，`step11 = step10 + MCP`，`step12 = step11 + Hooks`。
 
 `build-agent-example/doc/step01` 到 `step12` 采用统一结构：问题、解决方案、工作原理、变更内容、试一试，便于按期阅读和录课。
 
-| 学习单元 | 代码 / 实战项目 | 文档 / 课件 | 能力 | 新增概念 |
+| 序号 | 代码 / 实战项目 | 文档 / 课件 | 能力 | 新增概念 |
 |------|------|------|------|----------|
-| `step01` | [step01_single_call.py](build-agent-example/code/step01_single_call.py) | [doc](build-agent-example/doc/step01_single_call.md) | 单次对话 | API 调用基础 |
-| `step02` | [step02_loop_no_memory.py](build-agent-example/code/step02_loop_no_memory.py) | [doc](build-agent-example/doc/step02_loop_no_memory.md) | 连续对话 | 循环交互，无记忆 |
-| `step03` | [step03_history.py](build-agent-example/code/step03_history.py) | [doc](build-agent-example/doc/step03_history.md) | 短期记忆 | `messages[]` history 回灌 |
-| `step04` | [step04_system_prompt.py](build-agent-example/code/step04_system_prompt.py) | [doc](build-agent-example/doc/step04_system_prompt.md) | 角色设定 | system prompt |
-| `step05` | [step05_tool_use.py](build-agent-example/code/step05_tool_use.py) | [doc](build-agent-example/doc/step05_tool_use.md) | Tool Use | 工具调用循环 |
-| `step06` | [step06_skills.py](build-agent-example/code/step06_skills.py) | [doc](build-agent-example/doc/step06_skills.md) | Skills | 按需加载 `skills/{name}/SKILL.md` |
-| `step07` | [step07_memory_system.py](build-agent-example/code/step07_memory_system.py) | [doc](build-agent-example/doc/step07_memory_system.md) | 记忆系统 | raw history、长期记忆、用户画像、compact |
-| `step08` | [step08_plan_todolist.py](build-agent-example/code/step08_plan_todolist.py) | [doc](build-agent-example/doc/step08_plan_todolist.md) | 任务规划 | `update_todos` todolist |
-| `step09` | [step09_subagent.py](build-agent-example/code/step09_subagent.py) | [doc](build-agent-example/doc/step09_subagent.md) | 子代理 | 独立上下文 + 多身份 + 并发派遣 |
-| `step10` | [step10_agent_team.py](build-agent-example/code/step10_agent_team.py) | [doc](build-agent-example/doc/step10_agent_team.md) | Agent Team | 持久队友 + inbox + team 状态 |
-| `step11` | [step11_mcp.py](build-agent-example/code/step11_mcp.py) | [doc](build-agent-example/doc/step11_mcp.md) | MCP | 外部工具服务器 + stdio transport |
-| `step12` | [step12_hooks.py](build-agent-example/code/step12_hooks.py) | [doc](build-agent-example/doc/step12_hooks.md) | Hooks | Before/After 拦截、改写、审计 |
-| 第十期 | [Emperor Agent 实战](https://github.com/TheSyart/emperor-agent)（本仓库无独立示例代码） | [课件](ppt/第十期-ComputerUse.html) | Computer Use | 浏览器控制、桌面控制；观察 → 定位与判断 → 执行 → 再观察 |
+| 1 | [step01_single_call.py](build-agent-example/code/step01_single_call.py) | [doc](build-agent-example/doc/step01_single_call.md) | 单次对话 | API 调用基础 |
+| 2 | [step02_loop_no_memory.py](build-agent-example/code/step02_loop_no_memory.py) | [doc](build-agent-example/doc/step02_loop_no_memory.md) | 连续对话 | 循环交互，无记忆 |
+| 3 | [step03_history.py](build-agent-example/code/step03_history.py) | [doc](build-agent-example/doc/step03_history.md) | 短期记忆 | `messages[]` history 回灌 |
+| 4 | [step04_system_prompt.py](build-agent-example/code/step04_system_prompt.py) | [doc](build-agent-example/doc/step04_system_prompt.md) | 角色设定 | system prompt |
+| 5 | [step05_tool_use.py](build-agent-example/code/step05_tool_use.py) | [doc](build-agent-example/doc/step05_tool_use.md) | Tool Use | 工具调用循环 |
+| 6 | [step06_skills.py](build-agent-example/code/step06_skills.py) | [doc](build-agent-example/doc/step06_skills.md) | Skills | 按需加载 `skills/{name}/SKILL.md` |
+| 7 | [step07_memory_system.py](build-agent-example/code/step07_memory_system.py) | [doc](build-agent-example/doc/step07_memory_system.md) | 记忆系统 | raw history、长期记忆、用户画像、compact |
+| 8 | [step08_plan_todolist.py](build-agent-example/code/step08_plan_todolist.py) | [doc](build-agent-example/doc/step08_plan_todolist.md) | 任务规划 | `update_todos` todolist |
+| 9 | [step09_subagent.py](build-agent-example/code/step09_subagent.py) | [doc](build-agent-example/doc/step09_subagent.md) | 子代理 | 独立上下文 + 多身份 + 并发派遣 |
+| 10 | [step10_agent_team.py](build-agent-example/code/step10_agent_team.py) | [doc](build-agent-example/doc/step10_agent_team.md) | Agent Team | 持久队友 + inbox + team 状态 |
+| 11 | [step11_mcp.py](build-agent-example/code/step11_mcp.py) | [doc](build-agent-example/doc/step11_mcp.md) | MCP | 外部工具服务器 + stdio transport |
+| 12 | [step12_hooks.py](build-agent-example/code/step12_hooks.py) | [doc](build-agent-example/doc/step12_hooks.md) | Hooks | Before/After 拦截、改写、审计 |
+| 13 | [Emperor Agent 实战](https://github.com/TheSyart/emperor-agent)（本仓库无独立示例代码） | [课件](ppt/第十期-ComputerUse.html) | Computer Use | 浏览器控制、桌面控制；观察 → 定位与判断 → 执行 → 再观察 |
 | 附录 | [sp_mcp-skill-tool.py](build-agent-example/code/sp_mcp-skill-tool.py) | [doc](build-agent-example/doc/sp_mcp-skill-tool.md) | MCP × Skill × Tool | MCP 接单、Skill 加载 SOP、Tool 执行 |
 
 ## 记忆资源
