@@ -15,6 +15,7 @@
 | Agent 长期能力 | memory、用户画像、compact |
 | Agent 协作能力 | plan、subagent、agent team |
 | Agent 运行边界 | hooks 拦截、改写、审计 |
+| Computer Use 原理 | 浏览器控制、桌面控制、观察与执行闭环（仅课件） |
 
 配套资料包括 [ppt/](ppt/) 讲解页、[bilibili-transcripts/](bilibili-transcripts/) 视频转写稿，以及 `skills/`、`memory/`、`templates/` 演示资源。
 
@@ -31,6 +32,8 @@
 **[TheSyart/emperor-agent](https://github.com/TheSyart/emperor-agent)**
 
 Emperor Agent 是一个更完整的本地 Agent 项目，包含 Vue WebUI、多模型供应商、流式对话、tools、skills、memory、token telemetry 等能力。它不是本仓库里的教学 step，也不是本项目的附属代码，而是适合在学完基础后继续拆解的实战项目。
+
+第十期 Computer Use 的真实案例就在 Emperor Agent 中。本仓库提供原理讲解课件，具体实现和实战应用请查看这个进阶项目。
 
 两者关系很简单：
 
@@ -79,7 +82,7 @@ skills/                    skill 演示资源，供 step06+ 读取
 memory/                    memory 演示存储，供 step07+ 读取/写入
 templates/                 USER.md 与 compact_prompt.md 等记忆模板
 mcp_servers.json           step11 MCP server 配置，默认使用 .venv/bin/python
-ppt/                       课程 HTML/PPT 资料
+ppt/                       第一期至第十期 HTML 课件，配图位于 ppt/assets/
 bilibili-transcripts/      前七期视频的带时间戳纠错转写稿
 assets/readme/             README 封面、二维码和图片资源
 ```
@@ -130,6 +133,8 @@ step07 以后会读取并写入这些文件：
 
 ## 配套 PPT
 
+课件按视频期数排列，与教学代码的 `step` 编号独立。第十期 Computer Use 讲解浏览器控制、桌面控制和“观察 → 定位与判断 → 执行 → 再观察”闭环。本仓库仅提供课件，无配套示例代码；真实案例见前文推荐的进阶项目 [Emperor Agent](https://github.com/TheSyart/emperor-agent)。
+
 - [第一期：什么是 agent](ppt/第一期-什么是agent.html)
 - [第二期：手搓 agent](ppt/第二期-手搓agent.html)
 - [第三期：记忆系统](ppt/第三期-记忆系统.html)
@@ -139,6 +144,7 @@ step07 以后会读取并写入这些文件：
 - [第七期：Tool / Skill / MCP 三者辨析](ppt/第七期-tool-skill-mcp.html)
 - [第八期：Hooks 生命周期](ppt/第八期-hooks生命周期.html)
 - [第九期：目标驱动 Agent](ppt/第九期-目标驱动agent.html)
+- [第十期：Computer Use](ppt/第十期-ComputerUse.html)（仅课件，无示例代码）
 
 ## 视频转写稿
 
